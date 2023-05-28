@@ -1,3 +1,5 @@
+import random
+
 """
 This file contains the basics of Python
 Suchs as language syntax, basic features, libraries, and functions
@@ -28,3 +30,16 @@ print(f"Overwight? {'yes' if is_overwight else 'no'}")
 print(type(bmi))
 # Verifying the type
 print(isinstance(bmi, float))
+
+# Operators
+"""
+- Sum: +
+- Subtraction: - 
+- Multiply: *
+- Division: /
+- Int Division: // - discard decimal part
+- Mod: %
+- Exponentiation: **
+"""
+print(weight // height)
+print(f"Is even? {'yes' if random.randint(1, 10) % 2 == 0 else 'no'}")
