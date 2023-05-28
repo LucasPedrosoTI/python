@@ -53,3 +53,33 @@ arr = ['Yes', 'No', 1, 0, 'Y', 'N', '1', '0', '']
 rand_bool = arr[random.randint(0, len(arr)-1)]
 print(rand_bool)
 print('yes' if bool(rand_bool) else 'no')
+
+# Contional structures
+if (age >= 18):
+  print("Is not under age")
+elif (age <= 0):
+  print("Not a valid age")
+else:
+  print("Is under age")
+
+# While Loop 
+while (age <= 40):
+  print(f"You can't retire, you can retire at age of 40, and  you're {age}")
+  age += 1
+
+# For Loop
+for i in range(len(arr)):
+  print(i)
+
+for value in arr:
+  print(value)
+
+# defines start and end values
+for i in range(5, 10):
+  print(i * 10)
+
+# defines start, end, and interval values 
+arr = [];
+for i in range(0, 100, 10):
+  arr.append(i)
+print(arr) # [0, 10, 20, 30, 40, 50, 60, 70, 80, 90]
