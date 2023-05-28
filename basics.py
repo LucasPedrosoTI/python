@@ -43,3 +43,13 @@ print(isinstance(bmi, float))
 """
 print(weight // height)
 print(f"Is even? {'yes' if random.randint(1, 10) % 2 == 0 else 'no'}")
+
+# Type conversions
+num = '10'
+num = int(num)
+num = float(num)
+
+arr = ['Yes', 'No', 1, 0, 'Y', 'N', '1', '0', '']
+rand_bool = arr[random.randint(0, len(arr)-1)]
+print(rand_bool)
+print('yes' if bool(rand_bool) else 'no')
