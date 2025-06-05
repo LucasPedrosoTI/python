@@ -1,6 +1,9 @@
 from fpdf import FPDF
 from datetime import datetime
-from invoice_generator.monthly_hours_calculator import MonthlyHoursCalculator
+try:
+    from invoice_generator.monthly_hours_calculator import MonthlyHoursCalculator
+except ImportError:
+    from monthly_hours_calculator import MonthlyHoursCalculator
 from os import path
 import os
 from dotenv import load_dotenv
