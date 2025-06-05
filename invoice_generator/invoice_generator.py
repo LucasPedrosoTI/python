@@ -1,6 +1,6 @@
 from fpdf import FPDF
 from datetime import datetime
-from utils import calc_monthly_hours
+from invoice_generator.monthly_hours_calculator import MonthlyHoursCalculator
 from os import path
 import os
 from dotenv import load_dotenv
@@ -12,19 +12,23 @@ class InvoiceGenerator:
     Handles configuration loading, invoice data calculation, and PDF generation.
     """
     
-    def __init__(self, year=None, month=None):
+    def __init__(self, year=None, month=None, hours_per_day=8):
         """
         Initialize the InvoiceGenerator with configuration and invoice data.
         
         Args:
             year (int, optional): Invoice year. Defaults to current year.
             month (int, optional): Invoice month. Defaults to previous month.
+            hours_per_day (int, optional): Hours per business day. Defaults to 8.
         """
         # Load environment variables
         load_dotenv()
         
         # Load configuration from environment variables
         self._load_config()
+        
+        # Initialize the hours calculator
+        self.hours_calculator = MonthlyHoursCalculator(hours_per_day)
         
         # Set invoice date
         now = datetime.now()
@@ -61,7 +65,7 @@ class InvoiceGenerator:
         self.invoice_number = f"{self.year}-{self.month:02d}"
         self.invoice_date = f"{self.invoice_number}-01"
         
-        self.monthly_hours = calc_monthly_hours(self.year, self.month)
+        self.monthly_hours = self.hours_calculator.calc_monthly_hours(self.year, self.month)
         self.total_amount = self.hourly_rate * self.monthly_hours
     
     def _create_pdf(self):
