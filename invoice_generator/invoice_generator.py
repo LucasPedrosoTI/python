@@ -26,6 +26,9 @@ class InvoiceGenerator:
         """
         # Load environment variables
         load_dotenv()
+
+        # Verify environment variables
+        self._verify_environment_variables()
         
         # Load configuration from environment variables
         self._load_config()
@@ -42,7 +45,28 @@ class InvoiceGenerator:
         self._calculate_invoice_data()
         
         # Initialize PDF
-        self.pdf = None
+        self.pdf = FPDF()
+    
+    def _verify_environment_variables(self):
+        """Verify environment variables."""
+        if not os.getenv('CLIENT_NAME'):
+            raise ValueError("CLIENT_NAME is not set")
+        if not os.getenv('CLIENT_ADDRESS'):
+            raise ValueError("CLIENT_ADDRESS is not set")
+        if not os.getenv('CLIENT_EMAIL'):
+            raise ValueError("CLIENT_EMAIL is not set")
+        if not os.getenv('CLIENT_TAX_ID'):
+            raise ValueError("CLIENT_TAX_ID is not set")
+        if not os.getenv('COMPANY_NAME'):
+            raise ValueError("COMPANY_NAME is not set")
+        if not os.getenv('COMPANY_ADDRESS'):
+            raise ValueError("COMPANY_ADDRESS is not set")
+        if not os.getenv('COMPANY_CITY_STATE'):
+            raise ValueError("COMPANY_CITY_STATE is not set")
+        if not os.getenv('COMPANY_COUNTRY'):
+            raise ValueError("COMPANY_COUNTRY is not set")
+        if not os.getenv('COMPANY_EMAIL'):
+            raise ValueError("COMPANY_EMAIL is not set")
     
     def _load_config(self):
         """Load configuration from environment variables."""
@@ -53,11 +77,11 @@ class InvoiceGenerator:
         self.client_tax_id = os.getenv('CLIENT_TAX_ID')
         
         # Company configuration
-        self.company_name = os.getenv('COMPANY_NAME')
-        self.company_address = os.getenv('COMPANY_ADDRESS')
-        self.company_city_state = os.getenv('COMPANY_CITY_STATE')
-        self.company_country = os.getenv('COMPANY_COUNTRY')
-        self.company_email = os.getenv('COMPANY_EMAIL')
+        self.company_name = os.getenv('COMPANY_NAME') or ''
+        self.company_address = os.getenv('COMPANY_ADDRESS') or ''
+        self.company_city_state = os.getenv('COMPANY_CITY_STATE') or ''
+        self.company_country = os.getenv('COMPANY_COUNTRY') or ''
+        self.company_email = os.getenv('COMPANY_EMAIL') or ''
         
         # Invoice configuration
         self.font_family = os.getenv('FONT_FAMILY', 'Courier')
@@ -73,7 +97,6 @@ class InvoiceGenerator:
     
     def _create_pdf(self):
         """Initialize a new PDF document."""
-        self.pdf = FPDF()
         self.pdf.add_page()
     
     def _add_header(self):
