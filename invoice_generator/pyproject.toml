@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "invoice-generator"
+version = "0.1.0"
+description = "A Python invoice generator that creates PDF invoices"
+authors = ["Lucas Pedroso <lucas.pedrosoti@gmail.com>"]
+readme = "INSTALLATION_GUIDE.md"
+packages = [{include = "invoice_generator"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+fpdf2 = "^2.7.0"
+python-dotenv = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+
+[tool.poetry.scripts]
+invoice-generator = "invoice_generator.cli:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api" 

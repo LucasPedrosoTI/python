@@ -21,6 +21,90 @@
 
 3. **Set up your configuration** (see Configuration section below)
 
+## 🐍 Development Setup (Poetry Version)
+
+### Prerequisites
+- Python 3.8 or higher
+- Poetry (Python dependency manager)
+- Git (optional, for cloning)
+
+### Installation Steps
+
+1. **Install Poetry**
+
+2. **Navigate to the project directory**:
+   ```bash
+   cd invoice_generator
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   poetry install
+   ```
+
+4. **Create your configuration file** (see Configuration section below)
+
+### Usage with Poetry
+
+#### Basic Commands
+```bash
+# Generate invoice for previous month
+poetry run python invoice_generator.py
+
+# Run with CLI interface
+poetry run python cli.py
+
+# Generate invoice for specific month/year
+poetry run python cli.py --year 2024 --month 3
+
+# Generate with custom hours per day
+poetry run python cli.py --hours-per-day 6
+
+# Save to custom directory
+poetry run python cli.py --output ./my_invoices
+```
+
+#### Development Workflow
+```bash
+# Activate Poetry shell (optional but convenient)
+poetry shell
+
+# Now you can run commands directly
+python invoice_generator.py
+python cli.py --help
+
+# Run tests
+poetry run pytest tests/ -v
+
+# Add new dependencies
+poetry add package-name
+
+# Add development dependencies
+poetry add --group dev package-name
+
+# Show installed packages
+poetry show
+
+# Update dependencies
+poetry update
+```
+
+#### Testing
+```bash
+# Run all tests
+poetry run pytest
+
+# Run tests with verbose output
+poetry run pytest -v
+
+# Run specific test file
+poetry run pytest tests/test_invoice_generator.py
+
+# Run tests with coverage
+poetry add --group dev pytest-cov
+poetry run pytest --cov=invoice_generator
+```
+
 ## ⚙️ Configuration
 
 Create a `.env` file in the `C:\InvoiceGenerator\` directory with your business information:
@@ -54,7 +138,7 @@ FONT_FAMILY=Courier
 Open Command Prompt and use these commands:
 
 ```cmd
-# Generate invoice for current month
+# Generate invoice for previous month
 C:\InvoiceGenerator\InvoiceGenerator.exe
 
 # Generate invoice for specific month/year
