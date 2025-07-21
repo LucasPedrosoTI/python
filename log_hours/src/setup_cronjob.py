@@ -25,8 +25,8 @@ def create_cronjob_command():
     log_path = project_root / "cronjob.log"
     
     # Create the cron command
-    # 0 9 * * 5 means: minute=0, hour=9, any day of month, any month, day 5 (Friday)
-    cron_command = f"0 9 * * 5 cd {project_root} && {python_path} {script_path} >> {log_path} 2>&1"
+    # 0 10 * * 5 means: minute=0, hour=10, any day of month, any month, day 5 (Friday)
+    cron_command = f"0 10 * * 5 cd {project_root} && {python_path} {script_path} >> {log_path} 2>&1"
     
     return cron_command
 
@@ -77,7 +77,7 @@ def setup_cronjob():
                                text=True, 
                                check=True)
         print("✅ Cronjob successfully configured!")
-        print(f"📅 The work logger will run every Friday at 9:00 AM")
+        print(f"📅 The work logger will run every Friday at 10:00 AM")
         print(f"📁 Logs will be saved to: {get_project_root()}/cronjob.log")
         print(f"🔧 Command: {cron_command}")
         return True
@@ -91,7 +91,7 @@ def show_manual_setup():
     print("If automatic setup failed, you can manually add this cronjob:")
     print(f"\n1. Run: crontab -e")
     print("2. Add these lines:")
-    print(f"   # Automated Work Logger - Runs every Friday at 9am")
+    print(f"   # Automated Work Logger - Runs every Friday at 10am")
     print(f"   {create_cronjob_command()}")
     print("3. Save and exit")
 
@@ -150,7 +150,7 @@ def main():
         return
     
     print("\nThis will set up a cronjob to automatically log your work hours")
-    print("every Friday at 9:00 AM by:")
+    print("every Friday at 10:00 AM by:")
     print("• Querying Jira for your recent tickets")
     print("• Logging 8 hours for Monday-Friday")
     print("• Taking a screenshot for verification")

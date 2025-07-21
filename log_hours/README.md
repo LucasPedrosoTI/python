@@ -6,7 +6,7 @@ A Python automation tool that integrates with Jira to dynamically fetch your rec
 
 - **🎯 Dynamic Jira Integration**: Automatically queries your assigned tickets from the last 5 days
 - **📅 Full Week Logging**: Logs 8 hours for Monday through Friday
-- **🤖 Automated Scheduling**: Runs every Friday at 9am via cronjob
+- **🤖 Automated Scheduling**: Runs every Friday at 10am via cronjob
 - **📸 Verification Screenshots**: Takes screenshots to verify successful logging
 - **🔄 Headless Operation**: Runs silently in the background
 - **🛡️ Error Handling**: Robust error handling with fallback options
@@ -55,7 +55,7 @@ python src/setup_cronjob.py
 
 This will:
 - ✅ Check your environment configuration
-- ⚙️ Set up a cronjob to run every Friday at 9am
+- ⚙️ Set up a cronjob to run every Friday at 10am
 - 📁 Configure logging to `cronjob.log`
 
 ## Manual Usage 📋
@@ -184,13 +184,13 @@ jql = f'project = YOUR_PROJECT AND assignee = "{jira_username}" AND updated >= -
 ### Different Schedule
 Modify the cron expression in `src/setup_cronjob.py`:
 ```python
-# Current: Every Friday at 9am
-cron_command = f"0 9 * * 5 ..."
+# Current: Every Friday at 10am
+cron_command = f"0 10 * * 5 ..."
 
 # Examples:
-# Every day at 9am: "0 9 * * *"
-# Every Monday at 8am: "0 8 * * 1"
-# Twice a week: "0 9 * * 1,5"
+# Every day at 10am: "0 10 * * *"
+# Every Monday at 9am: "0 9 * * 1"
+# Twice a week: "0 10 * * 1,5"
 ```
 
 ## Security Notes 🔐
