@@ -3,8 +3,9 @@
 This repo will be used to save all python related project.
 
 ## Contents:
-1. [Basics](/basics.py)
+1. [Utilities](/utils)
 2. [Invoice Generator](/invoice_generator)
+3. [Log Hours](/log_hours)
 
 ## Projects
 
@@ -22,3 +23,12 @@ A Python application that automatically generates professional PDF invoices with
 - 📦 **Executable Version** - Windows executable for non-technical users
 
 For detailed installation instructions, configuration options, and usage examples, see the [Installation Guide](/invoice_generator/INSTALLATION_GUIDE.md).
+
+### 📅 Log Hours
+
+A Python application that automatically logs hours to the Log Hours system.
+
+**Features:**
+- 📅 **Automatic Log Hours** - Logs hours to the Log Hours system
+
+For detailed installation instructions, configuration options, and usage examples, see the [README](/log_hours/README.md).
