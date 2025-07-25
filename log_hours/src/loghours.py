@@ -241,7 +241,7 @@ class AutomatedWorkLogger:
         
         return success_count == total_days
     
-    def run(self, mode="week", specific_day=None):
+    def run(self, mode="week", specific_day=None, headless=True):
         """Main execution method"""
         try:
             print(f"=== Automated Work Logger Started at {datetime.now()} ===")
@@ -268,9 +268,10 @@ class AutomatedWorkLogger:
             tasks = self.get_jira_issues()
             print(f"📝 Task description: {tasks}")
             
-            # Step 2: Setup browser (headless for cronjob, visible for manual testing)
-            is_manual = mode in ["today", "day"]
-            self.setup_browser(headless=not is_manual)  # Show browser for manual runs
+            # Step 2: Setup browser with specified headless mode
+            browser_mode = "headless" if headless else "visible"
+            print(f"🌐 Browser mode: {browser_mode}")
+            self.setup_browser(headless=headless)
             
             # Step 3: Login to system
             self.login()
@@ -302,10 +303,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python loghours.py                    # Log full week (Mon-Fri) - for cronjob
-  python loghours.py --today           # Log only today's hours
-  python loghours.py --day Mo          # Log hours for Monday
-  python loghours.py --day We          # Log hours for Wednesday
+  python loghours.py                           # Log full week (Mon-Fri) - for cronjob
+  python loghours.py --today                   # Log only today's hours
+  python loghours.py --day Mo                  # Log hours for Monday
+  python loghours.py --day We                  # Log hours for Wednesday
+  python loghours.py --today --headless        # Log today's hours in headless mode (for Docker/VPS)
+  python loghours.py --day Fr --no-headless    # Log Friday's hours with visible browser
         """
     )
     
@@ -317,17 +320,28 @@ Examples:
                       choices=["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
                       help="Log hours for a specific day (Mo, Tu, We, Th, Fr, Sa, Su)")
     
+    # Browser mode arguments
+    browser_group = parser.add_mutually_exclusive_group()
+    browser_group.add_argument("--headless", 
+                              action="store_true", 
+                              default=True,
+                              help="Run browser in headless mode (default for all modes)")
+    browser_group.add_argument("--no-headless", 
+                              action="store_false", 
+                              dest="headless",
+                              help="Run browser in visible mode (for local debugging)")
+    
     args = parser.parse_args()
     
     # Create and run the logger
     logger = AutomatedWorkLogger()
     
     if args.today:
-        logger.run(mode="today")
+        logger.run(mode="today", headless=args.headless)
     elif args.day:
-        logger.run(mode="day", specific_day=args.day)
+        logger.run(mode="day", specific_day=args.day, headless=args.headless)
     else:
-        logger.run(mode="week")
+        logger.run(mode="week", headless=args.headless)
 
 
 if __name__ == "__main__":
