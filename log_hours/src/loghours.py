@@ -136,7 +136,7 @@ class AutomatedWorkLogger:
         self.page.goto("https://service-management.coderfull.com/login")
         
         # Check if submit button exists (login required)
-        submit_buttons = self.page.locator("button[type='submit']")
+        submit_buttons = self.page.locator("button:has-text('Login')")
         has_submit = submit_buttons.count() == 1
         
         if has_submit:
