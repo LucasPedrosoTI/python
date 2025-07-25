@@ -7,6 +7,12 @@ This repo will be used to save all python related project.
 2. [Invoice Generator](/invoice_generator)
 3. [Log Hours](/log_hours)
 
+## CI/CD
+
+This repository uses GitHub Actions for automated testing and deployment. Each project has its own workflow that only triggers when files in that specific project are changed:
+
+- **Log Hours**: `.github/workflows/log-hours.yml` - Triggers on changes to `log_hours/**`
+
 ## Projects
 
 ### 📧 Invoice Generator
@@ -26,9 +32,22 @@ For detailed installation instructions, configuration options, and usage example
 
 ### 📅 Log Hours
 
-A Python application that automatically logs hours to the Log Hours system.
+A Python application that automatically logs hours to the service management system using Playwright automation.
 
 **Features:**
-- 📅 **Automatic Log Hours** - Logs hours to the Log Hours system
+- 🎯 **Automated Hour Logging** - Automatically logs work hours to service management system
+- 🎭 **Playwright Integration** - Modern, reliable web automation (migrated from Selenium)
+- 🐳 **Docker Support** - Containerized deployment with Docker and Docker Compose
+- 🚀 **CI/CD Pipeline** - GitHub Actions workflow for automated testing and deployment
+- ⚙️ **VPS Deployment** - Automated deployment to VPS via DockerHub
+- 📱 **Responsive Design** - Handles different screen resolutions automatically
+- 🛡️ **Error Handling** - Smart error handling with debug screenshots
+
+**Tech Stack:**
+- Python 3.11+
+- Playwright for web automation
+- Poetry for dependency management
+- Docker for containerization
+- GitHub Actions for CI/CD
 
 For detailed installation instructions, configuration options, and usage examples, see the [README](/log_hours/README.md).

@@ -1,54 +1,47 @@
-# Use Python 3.11 slim image
-FROM python:3.11-slim
-
-# Add labels for better image management
-LABEL maintainer="work-logger"
-LABEL description="Automated Work Logger with Jira Integration"
-LABEL version="1.0"
+FROM mcr.microsoft.com/playwright/python:v1.53.0-jammy
 
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies for Playwright and cron
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    curl \
     cron \
-    sudo \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY pyproject.toml ./
+
+# Install Poetry
+RUN pip install poetry
+
+# Configure Poetry: Don't create virtual environment inside container
+RUN poetry config virtualenvs.create false
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN poetry install --no-dev --no-interaction --no-ansi
 
 # Install Playwright browsers
-RUN playwright install chromium \
-    && playwright install-deps chromium
+RUN playwright install chromium && playwright install-deps chromium
 
 # Copy application code
 COPY . .
 
-# Create directories and set permissions
-RUN mkdir -p screenshots logs \
-    && useradd -m -s /bin/bash appuser \
-    && chown -R appuser:appuser /app \
-    && chown -R appuser:appuser /ms-playwright \
-    && chmod +x docker-entrypoint.sh
+# Create directories for volumes
+RUN mkdir -p /app/screenshots /app/logs
 
 # Set environment variables
-ENV PYTHONPATH=/app/src
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
 
-USER appuser
+# Copy entrypoint script if it exists
+COPY docker-entrypoint.sh /docker-entrypoint.sh 2>/dev/null || echo "#!/bin/bash\nexec \"\$@\"" > /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
+# Default command
+CMD ["python", "-m", "pytest", "loghours.py::TestLoghours::test_loghours", "-v"]
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "from src.loghours import AutomatedWorkLogger; print('✅ Health check passed')" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "from loghours import TestLoghours; print('OK')" || exit 1
 
-# Use entrypoint script
-ENTRYPOINT ["./docker-entrypoint.sh"] 
+ENTRYPOINT ["/docker-entrypoint.sh"] 
