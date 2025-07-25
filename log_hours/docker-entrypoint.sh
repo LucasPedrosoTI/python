@@ -14,7 +14,7 @@ echo "  - Working directory: $(pwd)"
 
 # Test application import
 echo "🧪 Testing application import..."
-python -c "from loghours import TestLoghours; print('✅ Application import successful')"
+python -c "from src.loghours import AutomatedWorkLogger; print('✅ Application import successful')"
 
 # If running in interactive mode or specific command provided, execute it
 if [ "$#" -gt 0 ]; then
@@ -22,6 +22,6 @@ if [ "$#" -gt 0 ]; then
     exec "$@"
 else
     echo "🔄 Starting automated work logging..."
-    # Default: run the automation
-    exec python -m pytest loghours.py::TestLoghours::test_loghours -v
+    # Default: run the automation script directly
+    exec python src/loghours.py
 fi 

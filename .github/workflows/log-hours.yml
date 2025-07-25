@@ -18,7 +18,6 @@ env:
   CONTAINER_NAME: work-logger
   DEPLOY_PATH: /opt/work-logger
   WORKING_DIRECTORY: log_hours
-  PYTHON_VERSION: '3.13'
 
 jobs:
   test:
@@ -30,37 +29,32 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ env.PYTHON_VERSION }}
+        python-version: '3.11'
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Load cached venv
-      id: cached-poetry-dependencies
+    - name: Cache pip dependencies
       uses: actions/cache@v3
       with:
-        path: ${{ env.WORKING_DIRECTORY }}/.venv
-        key: venv-${{ runner.os }}-${{ hashFiles('**/poetry.lock') }}
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
     - name: Install dependencies
       working-directory: ${{ env.WORKING_DIRECTORY }}
       run: |
-        poetry install --no-interaction --no-ansi
+        python -m pip install --upgrade pip
+        pip install --index-url https://pypi.org/simple -r requirements.txt
 
     - name: Install Playwright browsers
       working-directory: ${{ env.WORKING_DIRECTORY }}
       run: |
-        poetry run playwright install chromium
-        poetry run playwright install-deps chromium
+        playwright install chromium
+        playwright install-deps chromium
 
     - name: Run basic tests
       working-directory: ${{ env.WORKING_DIRECTORY }}
       run: |
-        poetry run python -c "from loghours import TestLoghours; print('✅ Import successful')"
+        python -c "from src.loghours import AutomatedWorkLogger; print('✅ Import successful')"
 
   build-and-push:
     needs: test
@@ -103,7 +97,7 @@ jobs:
     - name: Test Docker image
       run: |
         echo "🧪 Testing Docker image..."
-        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "from loghours import TestLoghours; print('✅ Docker import test passed')"
+        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "from src.loghours import AutomatedWorkLogger; print('✅ Docker import test passed')"
 
   deploy:
     needs: [test, build-and-push]
@@ -251,7 +245,7 @@ jobs:
         
         # Test application
         echo "🧪 Testing application in container..."
-        docker exec ${{ env.CONTAINER_NAME }} python -c "from loghours import TestLoghours; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
+        docker exec ${{ env.CONTAINER_NAME }} python -c "from src.loghours import AutomatedWorkLogger; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
         
         # Show image info
         echo "🐳 Current image info:"

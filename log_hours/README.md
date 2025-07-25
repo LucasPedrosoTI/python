@@ -1,225 +1,100 @@
 # Automated Work Logger 🤖
 
-A Python automation tool that integrates with Jira to dynamically fetch your recent tickets and automatically log work hours for the entire week. Perfect for those who need to log hours consistently across all weekdays.
+Automates work hours logging to service management systems using Playwright web automation.
 
-## Features ✨
-
-- **🎯 Dynamic Jira Integration**: Automatically queries your assigned tickets from the last 5 days
-- **📅 Full Week Logging**: Logs 8 hours for Monday through Friday
-- **🤖 Automated Scheduling**: Runs every Friday at 10am via cronjob
-- **📸 Verification Screenshots**: Takes screenshots to verify successful logging
-- **🔄 Headless Operation**: Runs silently in the background
-- **🛡️ Error Handling**: Robust error handling with fallback options
-
-## Quick Start 🚀
-
-### 1. Install Dependencies
+## Quick Start
 
 ```bash
-# Install Python dependencies
-poetry install
+cd log_hours
 
-# Install Playwright browsers
-poetry run playwright install chromium
+# Setup
+python3 -m venv venv
+source venv/bin/activate
+pip install --index-url https://pypi.org/simple -r requirements.txt
+playwright install chromium
+
+# Run
+python src/loghours.py
 ```
 
-### 2. Configure Environment
+## Features
 
-Create a `.env` file in the project root:
+- 🎭 **Playwright automation** - Modern, reliable web automation (migrated from Selenium)
+- 📱 **Responsive design** - Auto-sets viewport to 1366x768 for site compatibility
+- 🛡️ **Smart error handling** - Multiple fallback selectors + debug screenshots
+- 🐳 **Docker ready** - Containerized deployment with CI/CD pipeline
+- 📦 **Simple dependencies** - Standard pip + requirements.txt (no Poetry conflicts)
 
-```env
-# System login credentials for work logging platform
-SYSTEM_USERNAME=your_username_here
-SYSTEM_PASSWORD=your_password_here
+## Setup
 
-# Jira API credentials for dynamic task fetching
-JIRA_URL=https://your_jira_url.atlassian.net
-JIRA_USERNAME=your_email@mail.com
-JIRA_API_TOKEN=your_jira_api_token_here
-JIRA_PROJECT=your_jira_project_here
-```
-
-### 3. Get Your Jira API Token
-
-1. Go to [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
-2. Click "Create API token"
-3. Label it "Work Logger" and copy the token
-4. Add it to your `.env` file as `JIRA_API_TOKEN`
-
-### 4. Set Up Automated Scheduling
-
+### Development
 ```bash
-# Run the setup script to configure the cronjob
-python src/setup_cronjob.py
+pip install --index-url https://pypi.org/simple -r requirements-dev.txt
+playwright install
 ```
 
-This will:
-- ✅ Check your environment configuration
-- ⚙️ Set up a cronjob to run every Friday at 10am
-- 📁 Configure logging to `cronjob.log`
+## Usage
 
-## Manual Usage 📋
-
-### Testing Modes (New! 🆕)
-
-The script supports flexible testing with different modes:
-
+### Basic
 ```bash
-# 🧪 Test with today only
-python src/loghours.py --today
+source venv/bin/activate
+python src/loghours.py
+```
 
-# 🎯 Test a specific day
-python src/loghours.py --day Mo     # Monday
-python src/loghours.py --day We     # Wednesday  
-python src/loghours.py --day Fr     # Friday
-
-# 📅 Full week (default - for cronjob)
+### Options
+```bash
+# Log full week (Monday-Friday)
 python src/loghours.py
 
-# ❓ See all options
-python src/loghours.py --help
+# Log only today's hours
+python src/loghours.py --today
+
+# Log specific day
+python src/loghours.py --day Mo  # Monday
+python src/loghours.py --day We  # Wednesday
 ```
 
-### What Each Mode Does
-
-**🧪 Today Mode (`--today`)**:
-- Perfect for testing and development
-- Shows browser window so you can watch it work
-- Logs hours only for the current day
-- Automatically skips weekends
-- Quick and safe for testing
-
-**🎯 Specific Day Mode (`--day [Mo|Tu|We|Th|Fr|Sa|Su]`)**:
-- Test any specific day
-- Shows browser window for visibility
-- Great for testing edge cases
-- Useful for catching up missed days
-
-**📅 Full Week Mode (default)**:
-- Production mode for cronjob automation
-- Runs headless (invisible browser)
-- Logs Monday through Friday
-- Takes longer but covers the entire week
-
-### Complete Process
-
-When you run the automation, it will:
-1. 📡 Query Jira for your recent tickets (defined project, updated in last 5 days)
-2. 📝 Format task description: "Daily Standup, Retro, Planning, Refinement, Code Reviews, help to team, and work on the tickets PROJECT-XXX, PROJECT-YYY"
-3. 🕐 Log 8 hours for each specified day
-4. 📸 Take a verification screenshot
-
-## Deployment 🚀
-
-Deployed with **Docker**.
-
-### **🐳 Automated Deployment (GitHub Actions + DockerHub)**
-
+### Docker
 ```bash
-# 1. Set up DockerHub repository and GitHub Secrets
-# 2. Push to main branch to trigger automated deployment
-git add .
-git commit -m "Deploy to VPS"
-git push origin main
-```
-### **📋 Complete Deployment Guide**
-See `DEPLOYMENT.md` for detailed setup instructions including GitHub Secrets configuration and SSH setup.
+# Build and run
+docker build -t log-hours .
+docker run --rm -v $(pwd)/screenshots:/app/screenshots log-hours
 
-## Task Description Format 📝
-
-The automation generates task descriptions like:
-
-```
-Daily Standup, Retro, Planning, Refinement, Code Reviews, help to team, and work on the tickets PROJECT-830, PROJECT-804, PROJECT-765, PROJECT-725, PROJECT-270
+# Or use compose
+docker-compose up
 ```
 
-## Monitoring & Troubleshooting 🔧
-
-### Check Cronjob Status
-```bash
-# View current cronjobs
-crontab -l
-
-# Check recent logs
-tail -f cronjob.log
-
-# Test manually (recommended testing approach)
-python src/loghours.py --today    # Quick test with today only
-python src/loghours.py --day We   # Test specific day
-python src/loghours.py            # Full week test
-```
-
-### Common Issues
-
-**Jira API Error**: Check your API token and username in `.env`
-**Login Failed**: Verify `SYSTEM_USERNAME` and `SYSTEM_PASSWORD`
-**Element Not Found**: The website UI may have changed - check debug screenshots
-
-### Screenshots
-
-The automation saves timestamped screenshots:
-- `hours_logged_verification_YYYYMMDD_HHMMSS.png` - Success verification
-- `error_screenshot_YYYYMMDD_HHMMSS.png` - Error debugging
-- `debug_screenshot_[Day].png` - Day-specific debugging
-
-## Project Structure 📁
+## Project Structure
 
 ```
 log_hours/
-├── src/
-│   ├── loghours.py           # Main automation script
-│   ├── setup_cronjob.py      # Cronjob configuration helper
-│   └── __init__.py
-├── pyproject.toml            # Dependencies and configuration
-├── poetry.lock              # Locked dependencies
-├── .env                     # Environment variables (create this)
-├── cronjob.log              # Automation logs (auto-created)
-└── README.md                # This file
+├── src/loghours.py          # Main automation script
+├── requirements.txt         # Production dependencies
+├── requirements-dev.txt     # Development dependencies
+├── Dockerfile              # Container configuration
+├── docker-compose.yml      # Multi-container setup
+└── .github/workflows/      # CI/CD pipeline
 ```
 
-## Development 🛠️
+## Dependencies
 
-### Running Tests
-```bash
-poetry run pytest src/loghours.py -v
-```
+**Production:** `playwright`, `python-dotenv`, `requests`
+**Development:** Adds `pytest`, `black`, `flake8`, `isort`
 
-### Debugging Tips
-- **Use `--today` for development**: Shows browser window and only affects one day
-- **Check screenshots**: All modes save verification screenshots
-- **Watch the console**: Detailed logging shows exactly what's happening
+## Troubleshooting
 
-## Advanced Configuration ⚙️
+| Issue | Solution |
+|-------|----------|
+| Import errors | Activate virtual environment: `source venv/bin/activate` |
+| Browser not launching | Run: `playwright install chromium` |
+| Timeout/element errors | Check `debug_screenshot.png` for page state |
+| Repository conflicts | Use `--index-url https://pypi.org/simple` |
 
-### Custom Jira Query
-You can modify the JQL query in `src/loghours.py`:
-```python
-jql = f'project = YOUR_PROJECT AND assignee = "{jira_username}" AND updated >= -5d'
-```
+## CI/CD
 
-### Different Schedule
-Modify the cron expression in `src/setup_cronjob.py`:
-```python
-# Current: Every Friday at 10am
-cron_command = f"0 10 * * 5 ..."
+GitHub Actions workflow automatically:
+- Tests on push to `log_hours/` directory
+- Builds Docker image and pushes to DockerHub
+- Deploys to VPS via SSH
 
-# Examples:
-# Every day at 10am: "0 10 * * *"
-# Every Monday at 9am: "0 9 * * 1"
-# Twice a week: "0 10 * * 1,5"
-```
-
-## Security Notes 🔐
-
-- Never commit your `.env` file to version control
-- Use API tokens instead of passwords where possible
-- Regularly rotate your Jira API tokens
-- Run with headless mode in production (default)
-
-## License 📄
-
-This project is for personal automation use. Ensure compliance with your company's automation policies.
-
----
-
-**Made with ❤️ for automated productivity** 
+**Required secrets:** `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `VPS_SSH_KEY`, `VPS_HOST`, `VPS_USER` 

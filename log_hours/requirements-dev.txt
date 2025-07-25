@@ -1,0 +1,10 @@
+# Development dependencies
+-r requirements.txt
+
+# Testing (if needed for future tests)
+pytest>=8.4.1
+
+# Code quality
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0 
