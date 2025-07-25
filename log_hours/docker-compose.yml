@@ -1,14 +1,11 @@
-version: '3.8'
+name: log-hours-project
 
 services:
-  work-logger:
+  app:
     image: ${DOCKER_IMAGE}
     container_name: ${CONTAINER_NAME}
-    environment:
-      - SYSTEM_USERNAME=${SYSTEM_USERNAME}
-      - SYSTEM_PASSWORD=${SYSTEM_PASSWORD}
-      - PYTHONPATH=/app
-      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
     volumes:
       - ./screenshots:/app/screenshots
       - ./logs:/app/logs

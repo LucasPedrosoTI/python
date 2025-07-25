@@ -10,5 +10,4 @@
 **/logs/*
 **/.env
 **/.env.*
-**/docker-compose.yml
 **/.github 

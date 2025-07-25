@@ -114,6 +114,46 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Validate required secrets
+      run: |
+        echo "🔍 Validating required secrets..."
+        missing_secrets=()
+        
+        # Check deployment secrets
+        [[ -z "${{ secrets.VPS_SSH_KEY }}" ]] && missing_secrets+=("VPS_SSH_KEY")
+        [[ -z "${{ secrets.VPS_HOST }}" ]] && missing_secrets+=("VPS_HOST")
+        [[ -z "${{ secrets.VPS_USER }}" ]] && missing_secrets+=("VPS_USER")
+        
+        # Check application secrets
+        [[ -z "${{ secrets.SYSTEM_USERNAME }}" ]] && missing_secrets+=("SYSTEM_USERNAME")
+        [[ -z "${{ secrets.SYSTEM_PASSWORD }}" ]] && missing_secrets+=("SYSTEM_PASSWORD")
+        [[ -z "${{ secrets.JIRA_URL }}" ]] && missing_secrets+=("JIRA_URL")
+        [[ -z "${{ secrets.JIRA_USERNAME }}" ]] && missing_secrets+=("JIRA_USERNAME")
+        [[ -z "${{ secrets.JIRA_PROJECT }}" ]] && missing_secrets+=("JIRA_PROJECT")
+        [[ -z "${{ secrets.JIRA_SVC_ACCOUNT }}" ]] && missing_secrets+=("JIRA_SVC_ACCOUNT")
+        [[ -z "${{ secrets.JIRA_API_TOKEN }}" ]] && missing_secrets+=("JIRA_API_TOKEN")
+        
+        if [ ${#missing_secrets[@]} -ne 0 ]; then
+          echo "❌ Missing required secrets in 'main' environment:"
+          printf " - %s\n" "${missing_secrets[@]}"
+          exit 1
+        fi
+        
+        echo "✅ All required secrets are present"
+
+    - name: Validate deployment files
+      run: |
+        echo "🔍 Validating deployment files..."
+        required_files=("log_hours/docker-compose.yml" "log_hours/docker-entrypoint.sh")
+        
+        for file in "${required_files[@]}"; do
+          if [[ ! -f "$file" ]]; then
+            echo "❌ Required file missing: $file"
+            exit 1
+          fi
+          echo "✅ Found: $file"
+        done
+
     - name: Setup SSH key
       run: |
         mkdir -p ~/.ssh
@@ -123,14 +163,19 @@ jobs:
 
     - name: Copy deployment files to VPS
       run: |
-        # Copy docker-compose and deployment scripts from log_hours directory
-        scp log_hours/docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/ || echo "No docker-compose.yml found"
-        scp log_hours/docker-entrypoint.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/ || echo "No docker-entrypoint.sh found"
+        # Copy required files from repository
+        echo "📤 Copying deployment files to VPS..."
+        scp log_hours/docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        scp log_hours/docker-entrypoint.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        echo "✅ Files copied successfully"
         
         # Create and copy deployment script
         cat > deploy-script.sh << 'EOF'
         #!/bin/bash
         set -e
+
+        # Enhanced error handling
+        trap 'echo "❌ Deployment failed at line $LINENO. Exit code: $?" >&2' ERR
         
         echo "🚀 Starting DockerHub deployment to VPS (Log Hours)..."
         
@@ -139,43 +184,56 @@ jobs:
         CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
         DOCKER_IMAGE="${{ env.DOCKER_IMAGE }}"
         
+        # Validate variables
+        [[ -z "$DEPLOY_PATH" ]] && { echo "❌ DEPLOY_PATH not set"; exit 1; }
+        [[ -z "$CONTAINER_NAME" ]] && { echo "❌ CONTAINER_NAME not set"; exit 1; }
+        [[ -z "$DOCKER_IMAGE" ]] && { echo "❌ DOCKER_IMAGE not set"; exit 1; }
+        
         # Create deployment directory
         sudo mkdir -p $DEPLOY_PATH
         sudo chown $USER:$USER $DEPLOY_PATH
         cd $DEPLOY_PATH
         
-        # Copy docker files if they exist
-        [ -f /tmp/docker-compose.yml ] && cp /tmp/docker-compose.yml .
-        [ -f /tmp/docker-entrypoint.sh ] && cp /tmp/docker-entrypoint.sh . && chmod +x docker-entrypoint.sh
+        # Validate copied files exist
+        echo "🔍 Validating copied files..."
+        for file in docker-compose.yml docker-entrypoint.sh; do
+          if [[ ! -f "/tmp/$file" ]]; then
+            echo "❌ Required file missing: /tmp/$file"
+            exit 1
+          fi
+        done
         
-        # Create default docker-compose.yml if not exists
-        if [ ! -f docker-compose.yml ]; then
-          cat > docker-compose.yml << EOL
-        version: '3.8'
-        services:
-          work-logger:
-            image: \${DOCKER_IMAGE}
-            container_name: \${CONTAINER_NAME}
-            environment:
-              - SYSTEM_USERNAME=\${SYSTEM_USERNAME}
-              - SYSTEM_PASSWORD=\${SYSTEM_PASSWORD}
-            volumes:
-              - ./screenshots:/app/screenshots
-              - ./logs:/app/logs
-            restart: unless-stopped
-        EOL
-        fi
+        # Copy required files
+        echo "📋 Copying deployment files..."
+        cp /tmp/docker-compose.yml .
+        cp /tmp/docker-entrypoint.sh .
+        chmod +x docker-entrypoint.sh
         
-        # Create/update environment file
-        echo "⚙️ Setting up environment..."
+        # Generate .env file with all required variables
+        echo "⚙️ Generating .env file..."
         cat > .env << EOL
+        # Docker configuration
         DOCKER_IMAGE=$DOCKER_IMAGE:latest
+        CONTAINER_NAME=$CONTAINER_NAME
+        
+        # Application credentials
         SYSTEM_USERNAME=${{ secrets.SYSTEM_USERNAME }}
         SYSTEM_PASSWORD=${{ secrets.SYSTEM_PASSWORD }}
+        JIRA_URL=${{ secrets.JIRA_URL }}
+        JIRA_USERNAME=${{ secrets.JIRA_USERNAME }}
+        JIRA_PROJECT=${{ secrets.JIRA_PROJECT }}
+        JIRA_SVC_ACCOUNT=${{ secrets.JIRA_SVC_ACCOUNT }}
+        JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+        
+        # Python environment
+        PYTHONPATH=/app
+        PYTHONUNBUFFERED=1
         EOL
         
         # Set secure permissions
         chmod 600 .env
+        
+        echo "✅ Environment file created with $(wc -l < .env) variables"
         
         # Create directories for volumes
         mkdir -p screenshots logs
@@ -184,9 +242,25 @@ jobs:
         echo "🛑 Stopping existing container..."
         docker compose down || true
         
-        # Pull latest image from DockerHub
+        # Clean up any existing containers with similar names
+        echo "🧹 Cleaning up existing containers..."
+        docker ps -a --filter "name=work-logger" --format "{{.Names}}" | xargs -r docker rm -f || true
+        
+        # Pull latest image from DockerHub with retry
         echo "📥 Pulling latest image from DockerHub..."
-        docker pull $DOCKER_IMAGE:latest
+        for i in {1..3}; do
+          if docker pull $DOCKER_IMAGE:latest; then
+            echo "✅ Image pulled successfully"
+            break
+          else
+            echo "⚠️ Pull attempt $i failed, retrying..."
+            sleep 5
+          fi
+          if [[ $i -eq 3 ]]; then
+            echo "❌ Failed to pull image after 3 attempts"
+            exit 1
+          fi
+        done
         
         # Clean up old images (keep last 2 versions)
         echo "🧹 Cleaning up old images..."
@@ -196,22 +270,37 @@ jobs:
         echo "🚀 Starting new container..."
         docker compose up -d
         
-        # Wait for container to be ready
+        # Wait for container to be ready with proper health check
         echo "⏳ Waiting for container to be ready..."
-        sleep 10
+        for i in {1..30}; do
+          if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+            echo "✅ Container started successfully"
+            break
+          else
+            echo "⏳ Waiting for container... (attempt $i/30)"
+            sleep 2
+          fi
+          if [[ $i -eq 30 ]]; then
+            echo "❌ Container failed to start within 60 seconds"
+            docker logs $CONTAINER_NAME || true
+            exit 1
+          fi
+        done
         
-        # Verify deployment
+        # Verify deployment - check for exact container name
         echo "🔍 Verifying deployment..."
-        if docker ps | grep -q $CONTAINER_NAME; then
-          echo "✅ Container is running"
+        if docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
+          echo "✅ Container is running with correct name: $CONTAINER_NAME"
           echo "📋 Container info:"
-          docker ps | grep $CONTAINER_NAME
+          docker ps --filter "name=^${CONTAINER_NAME}$"
           echo "📝 Recent logs:"
           docker logs $CONTAINER_NAME --tail=20
         else
-          echo "❌ Container failed to start"
-          echo "📝 Container logs:"
-          docker logs $CONTAINER_NAME || true
+          echo "❌ Container '$CONTAINER_NAME' not found"
+          echo "📋 Available containers:"
+          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
+          echo "📝 Checking for any work-logger related containers:"
+          docker ps --filter "name=work-logger" --format "table {{.Names}}\t{{.Image}}\t{{.Status}}" || true
           exit 1
         fi
         
@@ -229,29 +318,41 @@ jobs:
         scp deploy-script.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
 
     - name: Deploy to VPS
+      timeout-minutes: 10
       run: |
         ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash /tmp/deploy-script.sh && rm /tmp/deploy-script.sh"
 
     - name: Verify deployment
+      timeout-minutes: 5
       run: |
         ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
         echo "🔍 Final verification..."
         
         cd ${{ env.DEPLOY_PATH }}
         
-        # Check container status
-        if docker ps | grep -q ${{ env.CONTAINER_NAME }}; then
+        # Check container status with exact name match
+        if docker ps --format "{{.Names}}" | grep -q "^${{ env.CONTAINER_NAME }}$"; then
           echo "✅ Container is running"
           echo "📊 Container stats:"
           docker stats ${{ env.CONTAINER_NAME }} --no-stream
         else
           echo "❌ Container not running"
+          echo "📋 Available containers:"
+          docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}"
           exit 1
         fi
         
         # Test application
         echo "🧪 Testing application in container..."
         docker exec ${{ env.CONTAINER_NAME }} python -c "from src.loghours import AutomatedWorkLogger; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
+        
+        # Verify cron is set up
+        echo "⏰ Verifying cron schedule..."
+        if docker exec ${{ env.CONTAINER_NAME }} crontab -l | grep -q "0 10 \* \* 5"; then
+          echo "✅ Cron job configured: Every Friday at 10:00 AM"
+        else
+          echo "⚠️ Cron job not found or incorrectly configured"
+        fi
         
         # Show image info
         echo "🐳 Current image info:"
@@ -262,6 +363,17 @@ jobs:
     - name: Send deployment notification
       if: always()
       run: |
+        # Create deployment summary
+        echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+        echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Status | ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| VPS Host | ${{ secrets.VPS_HOST }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Container | ${{ env.CONTAINER_NAME }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Image | ${{ env.DOCKER_IMAGE }}:latest |" >> $GITHUB_STEP_SUMMARY
+        echo "| Path | ${{ env.DEPLOY_PATH }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Schedule | Every Friday at 10:00 AM |" >> $GITHUB_STEP_SUMMARY
+        
         if [ "${{ job.status }}" == "success" ]; then
           echo "🎉 Log Hours DockerHub deployment to VPS completed successfully!"
           echo "🔗 VPS: ${{ secrets.VPS_HOST }}"
@@ -269,6 +381,9 @@ jobs:
           echo "📦 Container: ${{ env.CONTAINER_NAME }}"
           echo "📂 Path: ${{ env.DEPLOY_PATH }}"
           echo "🌐 Registry: https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/work-logger"
+          echo "⏰ Next run: Next Friday at 10:00 AM"
         else
           echo "❌ Log Hours deployment failed!"
+          echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          echo "Check the workflow logs for details." >> $GITHUB_STEP_SUMMARY
         fi 

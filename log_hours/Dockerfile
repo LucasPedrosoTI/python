@@ -32,11 +32,8 @@ ENV PYTHONUNBUFFERED=1
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Default command - run the automation script directly
-CMD ["python", "src/loghours.py"]
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "from src.loghours import AutomatedWorkLogger; print('OK')" || exit 1
+    CMD pgrep -f cron > /dev/null && python -c "from src.loghours import AutomatedWorkLogger; print('OK')" || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"] 

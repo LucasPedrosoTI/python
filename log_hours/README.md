@@ -1,6 +1,6 @@
 # Automated Work Logger 🤖
 
-Automates work hours logging to service management systems using Playwright web automation.
+Automates work hours logging to service management systems using Playwright web automation. **Runs automatically every Friday at 10:00 AM** when deployed.
 
 ## Quick Start
 
@@ -13,7 +13,7 @@ source venv/bin/activate
 pip install --index-url https://pypi.org/simple -r requirements.txt
 playwright install chromium
 
-# Run
+# Manual Run
 python src/loghours.py
 ```
 
@@ -24,6 +24,7 @@ python src/loghours.py
 - 🛡️ **Smart error handling** - Multiple fallback selectors + debug screenshots
 - 🐳 **Docker ready** - Containerized deployment with CI/CD pipeline
 - 📦 **Simple dependencies** - Standard pip + requirements.txt (no Poetry conflicts)
+- ⏰ **Automated scheduling** - Runs every Friday at 10:00 AM via cron
 
 ## Setup
 
@@ -35,7 +36,7 @@ playwright install
 
 ## Usage
 
-### Basic
+### Local Development
 ```bash
 source venv/bin/activate
 python src/loghours.py
@@ -56,13 +57,29 @@ python src/loghours.py --day We  # Wednesday
 
 ### Docker
 ```bash
-# Build and run
+# Build and run with cron scheduling
 docker build -t log-hours .
-docker run --rm -v $(pwd)/screenshots:/app/screenshots log-hours
+docker run -d --name work-logger log-hours
 
-# Or use compose
-docker compose up
+# View logs
+docker logs work-logger
+
+# Run manually (override cron)
+docker run --rm log-hours python src/loghours.py --today
 ```
+
+## Deployment Behavior
+
+### 🗓️ **Automated Schedule:**
+- **Runs:** Every Friday at 10:00 AM
+- **Logs:** Full week (Monday-Friday) hours
+- **Location:** `/app/logs/cronjob.log` inside container
+
+### 📋 **Container Status:**
+- **Runs continuously** with cron daemon
+- **Auto-restarts** if container crashes
+- **Health checks** every 30 seconds
+- **Status logs** every hour
 
 ## Project Structure
 
@@ -89,6 +106,8 @@ log_hours/
 | Browser not launching | Run: `playwright install chromium` |
 | Timeout/element errors | Check `debug_screenshot.png` for page state |
 | Repository conflicts | Use `--index-url https://pypi.org/simple` |
+| Cron not running | Check container logs: `docker logs work-logger` |
+| Wrong schedule | Verify cron: `docker exec work-logger crontab -l` |
 
 ## CI/CD
 
