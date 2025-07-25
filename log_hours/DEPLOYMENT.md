@@ -64,10 +64,10 @@ ssh user@your-vps-ip
 cd /opt/work-logger
 
 # Container operations
-docker-compose ps                    # Status
-docker-compose logs -f               # Logs
-docker-compose restart               # Restart
-docker-compose pull && docker-compose up -d  # Update
+docker compose ps                    # Status
+docker compose logs -f               # Logs
+docker compose restart               # Restart
+docker compose pull && docker compose up -d  # Update
 
 # Manual execution
 docker exec work-logger python src/loghours.py --today
@@ -129,7 +129,7 @@ docker exec work-logger python src/loghours.py --today
 **Stages:**
 1. **Test:** Python + Playwright setup, import testing
 2. **Build:** Multi-platform Docker build, push to DockerHub
-3. **Deploy:** SSH to VPS, pull image, deploy with docker-compose
+3. **Deploy:** SSH to VPS, pull image, deploy with docker compose
 
 **Features:**
 - Multi-platform images (AMD64 + ARM64)
@@ -148,7 +148,7 @@ docker exec work-logger python src/loghours.py --today
 
 **Code changes:** Push to main → automatic deployment
 **Environment:** Update GitHub Secrets, restart container
-**Manual update:** `docker-compose pull && docker-compose up -d`
+**Manual update:** `docker compose pull && docker compose up -d`
 
 ---
 

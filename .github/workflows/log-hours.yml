@@ -182,7 +182,7 @@ jobs:
         
         # Stop existing container
         echo "🛑 Stopping existing container..."
-        docker-compose down || true
+        docker compose down || true
         
         # Pull latest image from DockerHub
         echo "📥 Pulling latest image from DockerHub..."
@@ -194,7 +194,7 @@ jobs:
         
         # Start new container
         echo "🚀 Starting new container..."
-        docker-compose up -d
+        docker compose up -d
         
         # Wait for container to be ready
         echo "⏳ Waiting for container to be ready..."

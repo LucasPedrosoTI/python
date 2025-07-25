@@ -61,7 +61,7 @@ docker build -t log-hours .
 docker run --rm -v $(pwd)/screenshots:/app/screenshots log-hours
 
 # Or use compose
-docker-compose up
+docker compose up
 ```
 
 ## Project Structure
