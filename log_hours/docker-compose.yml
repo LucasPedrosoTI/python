@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  work-logger:
+    image: ${DOCKER_IMAGE:-work-logger:latest}
+    container_name: work-logger
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./screenshots:/app/screenshots
+      - ./logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PYTHONPATH=/app/src
+    healthcheck:
+      test: ["CMD", "python", "-c", "from src.loghours import AutomatedWorkLogger; print('✅ Health OK')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    # Pull policy to always get latest
+    pull_policy: always 

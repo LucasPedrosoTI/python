@@ -109,6 +109,22 @@ When you run the automation, it will:
 3. 🕐 Log 8 hours for each specified day
 4. 📸 Take a verification screenshot
 
+## Deployment 🚀
+
+Deployed with **Docker**.
+
+### **🐳 Automated Deployment (GitHub Actions + DockerHub)**
+
+```bash
+# 1. Set up DockerHub repository and GitHub Secrets
+# 2. Push to main branch to trigger automated deployment
+git add .
+git commit -m "Deploy to VPS"
+git push origin main
+```
+### **📋 Complete Deployment Guide**
+See `DEPLOYMENT.md` for detailed setup instructions including GitHub Secrets configuration and SSH setup.
+
 ## Task Description Format 📝
 
 The automation generates task descriptions like:

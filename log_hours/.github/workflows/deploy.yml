@@ -1,0 +1,247 @@
+name: Deploy to VPS via DockerHub
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  DOCKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/work-logger
+  CONTAINER_NAME: work-logger
+  DEPLOY_PATH: /opt/work-logger
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install Playwright browsers
+      run: |
+        playwright install chromium
+        playwright install-deps chromium
+
+    - name: Run basic tests
+      run: |
+        python -c "from src.loghours import AutomatedWorkLogger; print('✅ Import successful')"
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to DockerHub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_IMAGE }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Test Docker image
+      run: |
+        echo "🧪 Testing Docker image..."
+        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "from src.loghours import AutomatedWorkLogger; print('✅ Docker import test passed')"
+
+  deploy:
+    needs: [test, build-and-push]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Copy deployment files to VPS
+      run: |
+        # Copy docker-compose and deployment scripts
+        scp docker-compose.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        scp docker-entrypoint.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+        
+        # Create and copy deployment script
+        cat > deploy-script.sh << 'EOF'
+        #!/bin/bash
+        set -e
+        
+        echo "🚀 Starting DockerHub deployment to VPS..."
+        
+        # Variables
+        DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
+        CONTAINER_NAME="${{ env.CONTAINER_NAME }}"
+        DOCKER_IMAGE="${{ env.DOCKER_IMAGE }}"
+        
+        # Create deployment directory
+        sudo mkdir -p $DEPLOY_PATH
+        sudo chown $USER:$USER $DEPLOY_PATH
+        cd $DEPLOY_PATH
+        
+        # Copy docker-compose.yml
+        cp /tmp/docker-compose.yml .
+        cp /tmp/docker-entrypoint.sh .
+        chmod +x docker-entrypoint.sh
+        
+        # Create/update environment file
+        echo "⚙️ Setting up environment..."
+        cat > .env << EOL
+        DOCKER_IMAGE=$DOCKER_IMAGE:latest
+        JIRA_URL=${{ secrets.JIRA_URL }}
+        JIRA_USERNAME=${{ secrets.JIRA_USERNAME }}
+        JIRA_SVC_ACCOUNT=${{ secrets.JIRA_SVC_ACCOUNT }}
+        JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+        JIRA_PROJECT=${{ secrets.JIRA_PROJECT }}
+        SYSTEM_USERNAME=${{ secrets.SYSTEM_USERNAME }}
+        SYSTEM_PASSWORD=${{ secrets.SYSTEM_PASSWORD }}
+        EOL
+        
+        # Set secure permissions
+        chmod 600 .env
+        
+        # Create directories for volumes
+        mkdir -p screenshots logs
+        
+        # Stop existing container
+        echo "🛑 Stopping existing container..."
+        docker-compose down || true
+        
+        # Pull latest image from DockerHub
+        echo "📥 Pulling latest image from DockerHub..."
+        docker pull $DOCKER_IMAGE:latest
+        
+        # Clean up old images (keep last 2 versions)
+        echo "🧹 Cleaning up old images..."
+        docker image prune -f || true
+        
+        # Start new container
+        echo "🚀 Starting new container..."
+        docker-compose up -d
+        
+        # Wait for container to be ready
+        echo "⏳ Waiting for container to be ready..."
+        sleep 10
+        
+        # Verify deployment
+        echo "🔍 Verifying deployment..."
+        if docker ps | grep -q $CONTAINER_NAME; then
+          echo "✅ Container is running"
+          echo "📋 Container info:"
+          docker ps | grep $CONTAINER_NAME
+          echo "📝 Recent logs:"
+          docker logs $CONTAINER_NAME --tail=20
+        else
+          echo "❌ Container failed to start"
+          echo "📝 Container logs:"
+          docker logs $CONTAINER_NAME || true
+          exit 1
+        fi
+        
+        # Setup host cron job for container health monitoring
+        echo "⏰ Setting up container health monitoring..."
+        (crontab -l 2>/dev/null | grep -v "work-logger-health") | crontab -
+        (crontab -l 2>/dev/null; echo "*/10 * * * * cd $DEPLOY_PATH && docker-compose ps $CONTAINER_NAME | grep -q 'Up' || (echo 'Restarting work-logger container' && docker-compose up -d)") | crontab -
+        
+        # Cleanup temp files
+        rm -f /tmp/docker-compose.yml /tmp/docker-entrypoint.sh
+        
+        echo "✅ Deployment completed successfully!"
+        echo "📍 Container: $CONTAINER_NAME"
+        echo "🐳 Image: $DOCKER_IMAGE:latest"
+        echo "📂 Location: $DEPLOY_PATH"
+        
+        EOF
+        
+        chmod +x deploy-script.sh
+        scp deploy-script.sh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/tmp/
+
+    - name: Deploy to VPS
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "bash /tmp/deploy-script.sh && rm /tmp/deploy-script.sh"
+
+    - name: Verify deployment
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
+        echo "🔍 Final verification..."
+        
+        cd ${{ env.DEPLOY_PATH }}
+        
+        # Check container status
+        if docker ps | grep -q ${{ env.CONTAINER_NAME }}; then
+          echo "✅ Container is running"
+          echo "📊 Container stats:"
+          docker stats ${{ env.CONTAINER_NAME }} --no-stream
+        else
+          echo "❌ Container not running"
+          exit 1
+        fi
+        
+        # Check cron jobs in container
+        echo "📅 Container cron jobs:"
+        docker exec ${{ env.CONTAINER_NAME }} crontab -l 2>/dev/null || echo "No cron jobs found"
+        
+        # Test application
+        echo "🧪 Testing application in container..."
+        docker exec ${{ env.CONTAINER_NAME }} python -c "from src.loghours import AutomatedWorkLogger; print('✅ Application test passed')"
+        
+        # Show image info
+        echo "🐳 Current image info:"
+        docker images | grep work-logger | head -5
+        
+        EOF
+
+    - name: Send deployment notification
+      if: always()
+      run: |
+        if [ "${{ job.status }}" == "success" ]; then
+          echo "🎉 DockerHub deployment to VPS completed successfully!"
+          echo "🔗 VPS: ${{ secrets.VPS_HOST }}"
+          echo "🐳 Image: ${{ env.DOCKER_IMAGE }}:latest"
+          echo "📦 Container: ${{ env.CONTAINER_NAME }}"
+          echo "📂 Path: ${{ env.DEPLOY_PATH }}"
+          echo "🌐 Registry: https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/work-logger"
+        else
+          echo "❌ Deployment failed!"
+        fi 
