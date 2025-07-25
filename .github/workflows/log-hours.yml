@@ -18,6 +18,7 @@ env:
   CONTAINER_NAME: work-logger
   DEPLOY_PATH: /opt/work-logger
   WORKING_DIRECTORY: log_hours
+  PYTHON_VERSION: '3.13'
 
 jobs:
   test:
@@ -29,7 +30,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: ${{ env.PYTHON_VERSION }}
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
