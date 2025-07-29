@@ -53,6 +53,10 @@ python src/loghours.py --today
 # Log specific day
 python src/loghours.py --day Mo  # Monday
 python src/loghours.py --day We  # Wednesday
+
+# Log day intervals
+python src/loghours.py --interval Tu-Fr  # Tuesday through Friday
+python src/loghours.py --interval Mo-We  # Monday through Wednesday
 ```
 
 ### Docker

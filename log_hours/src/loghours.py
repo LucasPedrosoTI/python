@@ -24,7 +24,45 @@ class AutomatedWorkLogger:
         if not os.path.exists("screenshots"):
             os.makedirs("screenshots")
             print("📁 Created screenshots directory")
-        
+    
+    def parse_day_interval(self, interval):
+        """Parse day interval like 'Tu-Fr' and return list of days"""
+        try:
+            # Split the interval
+            parts = interval.split('-')
+            if len(parts) != 2:
+                raise ValueError(f"Invalid interval format. Expected 'Day-Day' (e.g., 'Tu-Fr'), got '{interval}'")
+            
+            start_day, end_day = parts[0].strip(), parts[1].strip()
+            
+            # Validate day abbreviations
+            valid_days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+            if start_day not in valid_days or end_day not in valid_days:
+                raise ValueError(f"Invalid day abbreviation. Use: {', '.join(valid_days)}")
+            
+            # Map days to indices
+            day_to_index = {day: i for i, day in enumerate(valid_days)}
+            start_index = day_to_index[start_day]
+            end_index = day_to_index[end_day]
+            
+            # Generate the range of days
+            days = []
+            if start_index <= end_index:
+                # Normal range (e.g., Tu-Fr)
+                for i in range(start_index, end_index + 1):
+                    days.append(valid_days[i])
+            else:
+                # Wrap around range (e.g., Fr-Mo)
+                for i in range(start_index, len(valid_days)):
+                    days.append(valid_days[i])
+                for i in range(0, end_index + 1):
+                    days.append(valid_days[i])
+            
+            return days
+            
+        except Exception as e:
+            raise ValueError(f"Error parsing interval '{interval}': {str(e)}")
+    
     def get_jira_issues(self):
         """Fetch recent Jira issues assigned to the user"""
         # Jira API configuration
@@ -241,7 +279,7 @@ class AutomatedWorkLogger:
         
         return success_count == total_days
     
-    def run(self, mode="week", specific_day=None, headless=True):
+    def run(self, mode="week", specific_day=None, interval=None, headless=True):
         """Main execution method"""
         try:
             print(f"=== Automated Work Logger Started at {datetime.now()} ===")
@@ -260,6 +298,10 @@ class AutomatedWorkLogger:
                     return
                 days_to_log = [specific_day]
                 print(f"🗓️  Mode: Single day ({self.get_weekday_full_name(specific_day)})")
+            elif mode == "interval" and interval:
+                days_to_log = self.parse_day_interval(interval)
+                day_names = [self.get_weekday_full_name(day) for day in days_to_log]
+                print(f"🗓️  Mode: Interval ({interval}) - {', '.join(day_names)}")
             else:
                 days_to_log = ["Mo", "Tu", "We", "Th", "Fr"]
                 print(f"🗓️  Mode: Full work week (Monday-Friday)")
@@ -307,6 +349,9 @@ Examples:
   python loghours.py --today                   # Log only today's hours
   python loghours.py --day Mo                  # Log hours for Monday
   python loghours.py --day We                  # Log hours for Wednesday
+  python loghours.py --interval Tu-Fr          # Log hours for Tuesday through Friday
+  python loghours.py --interval Mo-We          # Log hours for Monday through Wednesday
+  python loghours.py --interval Fr-Mo          # Log hours for Friday through Monday (wrap around)
   python loghours.py --today --headless        # Log today's hours in headless mode (for Docker/VPS)
   python loghours.py --day Fr --no-headless    # Log Friday's hours with visible browser
         """
@@ -319,6 +364,9 @@ Examples:
     group.add_argument("--day", 
                       choices=["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
                       help="Log hours for a specific day (Mo, Tu, We, Th, Fr, Sa, Su)")
+    group.add_argument("--interval",
+                      type=str,
+                      help="Log hours for a range of days (e.g., 'Tu-Fr', 'Mo-We')")
     
     # Browser mode arguments
     browser_group = parser.add_mutually_exclusive_group()
@@ -336,12 +384,21 @@ Examples:
     # Create and run the logger
     logger = AutomatedWorkLogger()
     
-    if args.today:
-        logger.run(mode="today", headless=args.headless)
-    elif args.day:
-        logger.run(mode="day", specific_day=args.day, headless=args.headless)
-    else:
-        logger.run(mode="week", headless=args.headless)
+    try:
+        if args.today:
+            logger.run(mode="today", headless=args.headless)
+        elif args.day:
+            logger.run(mode="day", specific_day=args.day, headless=args.headless)
+        elif args.interval:
+            logger.run(mode="interval", interval=args.interval, headless=args.headless)
+        else:
+            logger.run(mode="week", headless=args.headless)
+    except ValueError as e:
+        print(f"❌ {str(e)}")
+        return 1
+    except Exception as e:
+        print(f"❌ Unexpected error: {str(e)}")
+        return 1
 
 
 if __name__ == "__main__":
