@@ -10,7 +10,7 @@ cd log_hours
 # Setup
 python3 -m venv venv
 source venv/bin/activate
-pip install --index-url https://pypi.org/simple -r requirements.txt
+pip install -r requirements.txt
 playwright install chromium
 
 # Manual Run
@@ -30,8 +30,8 @@ python src/loghours.py
 
 ### Development
 ```bash
-pip install --index-url https://pypi.org/simple -r requirements-dev.txt
-playwright install
+pip install -r requirements-dev.txt
+playwright install chromium
 ```
 
 ## Usage
@@ -57,6 +57,10 @@ python src/loghours.py --day We  # Wednesday
 # Log day intervals
 python src/loghours.py --interval Tu-Fr  # Tuesday through Friday
 python src/loghours.py --interval Mo-We  # Monday through Wednesday
+
+# With/Without Browser
+python src/loghours.py --today --headless
+python src/loghours.py --today --no-headless
 ```
 
 ### Docker
