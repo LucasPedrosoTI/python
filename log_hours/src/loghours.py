@@ -7,8 +7,17 @@ from datetime import datetime
 import base64
 import json
 import argparse
+import logging
 
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 BUSINESS_DAYS = WEEKDAYS[0:5]
@@ -25,7 +34,7 @@ class AutomatedWorkLogger:
         """Create screenshots directory if it doesn't exist"""
         if not os.path.exists("screenshots"):
             os.makedirs("screenshots")
-            print("📁 Created screenshots directory")
+            logger.info("📁 Created screenshots directory")
     
     def parse_day_interval(self, interval):
         """Parse day interval like 'Tu-Fr' and return list of days"""
@@ -107,7 +116,7 @@ class AutomatedWorkLogger:
             "fields": "key,summary"
         }
         
-        print(f"Querying Jira for recent tickets...")
+        logger.info("Querying Jira for recent tickets...")
         
         try:
             response = requests.get(url, headers=headers, params=params, timeout=30)
@@ -132,7 +141,7 @@ class AutomatedWorkLogger:
             raise ValueError(f"No recent tickets found for {jira_username} in {jira_project} project (last 5 days). Please verify your Jira username and that you have assigned tickets.")
         
         issue_keys = [issue['key'] for issue in issues]
-        print(f"Found {len(issue_keys)} tickets: {', '.join(issue_keys)}")
+        logger.info(f"Found {len(issue_keys)} tickets: {', '.join(issue_keys)}")
         
         # Format tasks same as n8n automation
         tasks = f"Daily Standup, Retro, Planning, Refinement, Code Reviews, help to team, and work on the tickets {', '.join(issue_keys)}"
@@ -170,7 +179,7 @@ class AutomatedWorkLogger:
     
     def login(self):
         """Handle login to the work logging system"""
-        print("Navigating to login page...")
+        logger.info("Navigating to login page...")
         self.page.goto("https://service-management.coderfull.com")
         
         # Check if submit button exists (login required)
@@ -179,25 +188,25 @@ class AutomatedWorkLogger:
         
         if has_submit:
             try:
-                print("Login required. Authenticating...")
+                logger.info("Login required. Authenticating...")
                 # Fill in credentials
                 self.page.locator("input[label='Username']").fill(os.getenv("SYSTEM_USERNAME"))
                 self.page.locator("input[label='Password']").fill(os.getenv("SYSTEM_PASSWORD"))
                 submit_buttons.click()
-                print("Waiting for login to complete...")
+                logger.info("Waiting for login to complete...")
                 
                 self.page.wait_for_selector("button:has-text('Log Hours')", timeout=10000)
-                print("Login successful!")
+                logger.info("Login successful!")
             except Exception as e:
-                print(f"❌ Error logging in: {str(e)}, will try to continue without login...")
+                logger.error(f"❌ Error logging in: {str(e)}, will try to continue without login...")
         else:
-            print("Already logged in.")
+            logger.info("Already logged in.")
     
     def check_if_hours_logged(self, day):
         """Check if hours are already logged for a specific day"""
         try:
             day_name = self.get_weekday_full_name(day)
-            print(f"🔍 Checking if hours are already logged for {day_name} ({day})...")
+            logger.info(f"🔍 Checking if hours are already logged for {day_name} ({day})...")
             
             # Click on the day to see if hours are already logged
             try:
@@ -206,7 +215,7 @@ class AutomatedWorkLogger:
                 try:
                     self.page.locator(f"text={day}").click(timeout=10000)
                 except:
-                    print(f"⚠️  Could not find {day} element to check hours")
+                    logger.warning(f"⚠️  Could not find {day} element to check hours")
                     return False
             
             # Wait a moment for the form to load
@@ -224,14 +233,14 @@ class AutomatedWorkLogger:
             has_hours = bool(task_value.strip() and time_value.strip())
             
             if has_hours:
-                print(f"✅ Hours already logged for {day_name}: {time_value} - {task_value[:50]}...")
+                logger.info(f"✅ Hours already logged for {day_name}: {time_value} - {task_value[:50]}...")
                 return True
             else:
-                print(f"⭕ No hours logged yet for {day_name}")
+                logger.info(f"⭕ No hours logged yet for {day_name}")
                 return False
                 
         except Exception as e:
-            print(f"⚠️  Error checking hours for {day}: {str(e)}")
+            logger.warning(f"⚠️  Error checking hours for {day}: {str(e)}")
             return False
     
     def log_hours_for_day(self, day, tasks, override=False):
@@ -242,10 +251,10 @@ class AutomatedWorkLogger:
             # Check if hours are already logged (unless this is part of the check itself)
             if not override:
                 if self.check_if_hours_logged(day):
-                    print(f"⏭️  Skipping {day_name} - hours already logged (use --override to relog)")
+                    logger.info(f"⏭️  Skipping {day_name} - hours already logged (use --override to relog)")
                     return True  # Consider this a success since hours exist
             
-            print(f"📝 Logging hours for {day_name} ({day})...")
+            logger.info(f"📝 Logging hours for {day_name} ({day})...")
             
             # Navigate to the day (click might have happened in check, but ensure we're there)
             try:
@@ -272,11 +281,11 @@ class AutomatedWorkLogger:
             self.page.wait_for_timeout(1000)
             
             action = "Updated" if override else "Logged"
-            print(f"✅ Successfully {action.lower()} 8 hours for {day_name}")
+            logger.info(f"✅ Successfully {action.lower()} 8 hours for {day_name}")
             return True
             
         except Exception as e:
-            print(f"❌ Error logging hours for {day}: {str(e)}")
+            logger.error(f"❌ Error logging hours for {day}: {str(e)}")
             return False
     
     def log_hours_for_week(self, tasks, days=None, override=False):
@@ -291,7 +300,8 @@ class AutomatedWorkLogger:
         success_count = 0
         total_days = len(days)
         
-        print(f"🔄 Mode: {'Override existing hours' if override else 'Skip days with existing hours'}")
+        mode_msg = "Override existing hours" if override else "Skip days with existing hours"
+        logger.info(f"🔄 Mode: {mode_msg}")
         
         # Loop through each specified day
         for day in days:
@@ -303,71 +313,71 @@ class AutomatedWorkLogger:
                 self.page.wait_for_timeout(500)
         
         # Take a final screenshot to verify logged hours
-        print(f"\n📸 Taking verification screenshot...")
+        logger.info("📸 Taking verification screenshot...")
         
         # Wait for loading to complete using multiple strategies
         try:            
-            print("⏳ Checking for loading spinner...")
+            logger.info("⏳ Checking for loading spinner...")
             try:
                 self.page.wait_for_selector('svg.tw-animate-spin', timeout=10000, state="hidden")
             except:
-                print("⚠️  Warning: Could not find loading spinner")
-                print("⏳ Adding fallback wait...")
+                logger.warning("⚠️  Warning: Could not find loading spinner")
+                logger.info("⏳ Adding fallback wait...")
                 self.page.wait_for_timeout(3000)  # Fallback wait
             
-            print("✅ Page loading completed and UI is ready")
+            logger.info("✅ Page loading completed and UI is ready")
         except Exception as e:
-            print(f"⚠️  Warning: Could not fully confirm page loading completion: {str(e)}")
-            print("⏳ Adding fallback wait...")
+            logger.warning(f"⚠️  Warning: Could not fully confirm page loading completion: {str(e)}")
+            logger.info("⏳ Adding fallback wait...")
             self.page.wait_for_timeout(3000)  # Fallback wait
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         screenshot_path = f"screenshots/hours_logged_verification_{timestamp}.png"
         self.page.screenshot(path=screenshot_path)
-        print(f"Screenshot saved as '{screenshot_path}'")
+        logger.info(f"Screenshot saved as '{screenshot_path}'")
         
         # Summary
         if success_count == total_days:
-            print(f"✅ Successfully processed hours for all {total_days} day(s)!")
+            logger.info(f"✅ Successfully processed hours for all {total_days} day(s)!")
         else:
-            print(f"⚠️  Processed hours for {success_count}/{total_days} day(s)")
+            logger.warning(f"⚠️  Processed hours for {success_count}/{total_days} day(s)")
         
         return success_count == total_days
     
     def run(self, mode="week", specific_day=None, interval=None, headless=True, override=False):
         """Main execution method"""
         try:
-            print(f"=== Automated Work Logger Started at {datetime.now()} ===")
+            logger.info(f"=== Automated Work Logger Started at {datetime.now()} ===")
             
             # Determine what days to log
             if mode == "today":
                 current_day = self.get_current_weekday()
                 if current_day in ["Sa", "Su"]:
-                    print(f"🗓️  Today is {self.get_weekday_full_name(current_day)} (weekend). No work hours to log.")
+                    logger.info(f"🗓️  Today is {self.get_weekday_full_name(current_day)} (weekend). No work hours to log.")
                     return
                 days_to_log = [current_day]
-                print(f"🗓️  Mode: Single day (Today - {self.get_weekday_full_name(current_day)})")
+                logger.info(f"🗓️  Mode: Single day (Today - {self.get_weekday_full_name(current_day)})")
             elif mode == "day" and specific_day:
                 if specific_day not in WEEKDAYS:
-                    print(f"❌ Invalid day: {specific_day}. Use {', '.join(WEEKDAYS)}")
+                    logger.error(f"❌ Invalid day: {specific_day}. Use {', '.join(WEEKDAYS)}")
                     return
                 days_to_log = [specific_day]
-                print(f"🗓️  Mode: Single day ({self.get_weekday_full_name(specific_day)})")
+                logger.info(f"🗓️  Mode: Single day ({self.get_weekday_full_name(specific_day)})")
             elif mode == "interval" and interval:
                 days_to_log = self.parse_day_interval(interval)
                 day_names = [self.get_weekday_full_name(day) for day in days_to_log]
-                print(f"🗓️  Mode: Interval ({interval}) - {', '.join(day_names)}")
+                logger.info(f"🗓️  Mode: Interval ({interval}) - {', '.join(day_names)}")
             else:
                 days_to_log = BUSINESS_DAYS
-                print(f"🗓️  Mode: Full work week (Monday-Friday)")
+                logger.info("🗓️  Mode: Full work week (Monday-Friday)")
             
             # Step 1: Get dynamic tasks from Jira
             tasks = self.get_jira_issues()
-            print(f"📝 Task description: {tasks}")
+            logger.info(f"📝 Task description: {tasks}")
             
             # Step 2: Setup browser with specified headless mode
             browser_mode = "headless" if headless else "visible"
-            print(f"🌐 Browser mode: {browser_mode}")
+            logger.info(f"🌐 Browser mode: {browser_mode}")
             self.setup_browser(headless=headless)
             
             # Step 3: Login to system
@@ -377,17 +387,17 @@ class AutomatedWorkLogger:
             success = self.log_hours_for_week(tasks, days_to_log, override=override)
             
             if success:
-                print("\n🎉 Work logging completed successfully!")
+                logger.info("🎉 Work logging completed successfully!")
             else:
-                print("\n⚠️  Work logging completed with some errors.")
+                logger.warning("⚠️  Work logging completed with some errors.")
             
         except Exception as e:
-            print(f"❌ Error in main execution: {str(e)}")
+            logger.error(f"❌ Error in main execution: {str(e)}")
             # Take screenshot for debugging
             if self.page:
                 error_screenshot = f"screenshots/error_screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
                 self.page.screenshot(path=error_screenshot)
-                print(f"Error screenshot saved as '{error_screenshot}'")
+                logger.error(f"Error screenshot saved as '{error_screenshot}'")
         finally:
             # Always cleanup browser resources
             self.teardown_browser()
@@ -440,25 +450,34 @@ Examples:
                               dest="headless",
                               help="Run browser in visible mode (for local debugging)")
     
+    # Logging level argument
+    parser.add_argument("--log-level",
+                       choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
+                       default='INFO',
+                       help="Set logging level (default: INFO)")
+    
     args = parser.parse_args()
     
+    # Set logging level based on argument
+    logging.getLogger().setLevel(getattr(logging, args.log_level))
+    
     # Create and run the logger
-    logger = AutomatedWorkLogger()
+    work_logger = AutomatedWorkLogger()
     
     try:
         if args.today:
-            logger.run(mode="today", headless=args.headless, override=args.override)
+            work_logger.run(mode="today", headless=args.headless, override=args.override)
         elif args.day:
-            logger.run(mode="day", specific_day=args.day, headless=args.headless, override=args.override)
+            work_logger.run(mode="day", specific_day=args.day, headless=args.headless, override=args.override)
         elif args.interval:
-            logger.run(mode="interval", interval=args.interval, headless=args.headless, override=args.override)
+            work_logger.run(mode="interval", interval=args.interval, headless=args.headless, override=args.override)
         else:
-            logger.run(mode="week", headless=args.headless, override=args.override)
+            work_logger.run(mode="week", headless=args.headless, override=args.override)
     except ValueError as e:
-        print(f"❌ {str(e)}")
+        logger.error(f"❌ {str(e)}")
         return 1
     except Exception as e:
-        print(f"❌ Unexpected error: {str(e)}")
+        logger.error(f"❌ Unexpected error: {str(e)}")
         return 1
 
 
