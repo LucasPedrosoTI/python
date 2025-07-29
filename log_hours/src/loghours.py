@@ -401,26 +401,26 @@ def main():
         epilog="""
 Examples:
   python loghours.py                           # Log full week (Mon-Fri) - for cronjob
-  python loghours.py --today                   # Log only today's hours
-  python loghours.py --day Mo                  # Log hours for Monday
-  python loghours.py --day We                  # Log hours for Wednesday
-  python loghours.py --interval Tu-Fr          # Log hours for Tuesday through Friday
-  python loghours.py --interval Mo-We          # Log hours for Monday through Wednesday
-  python loghours.py --interval Fr-Mo          # Log hours for Friday through Monday (wrap around)
-  python loghours.py --today --override        # Log today's hours, overriding existing entries
-  python loghours.py --day Fr --no-headless    # Log Friday's hours with visible browser
+  python loghours.py -t/--today                 # Log only today's hours
+  python loghours.py -d Mo/--day Mo             # Log hours for Monday
+  python loghours.py -d We/--day We             # Log hours for Wednesday
+  python loghours.py -i Tu-Fr/--interval Tu-Fr  # Log hours for Tuesday through Friday
+  python loghours.py -i Mo-We          # Log hours for Monday through Wednesday
+  python loghours.py -i Fr-Mo          # Log hours for Friday through Monday (wrap around)
+  python loghours.py -t --override        # Log today's hours, overriding existing entries
+  python loghours.py -d Fr -v    # Log Friday's hours with visible browser
   python loghours.py -o                        # Log full week, overriding any existing hours
         """
     )
     
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--today", 
+    group.add_argument("-t", "--today", 
                       action="store_true",
                       help="Log hours only for today (for testing)")
-    group.add_argument("--day", 
+    group.add_argument("-d", "--day", 
                       choices=WEEKDAYS,
                       help=f"Log hours for a specific day ({', '.join(WEEKDAYS)})")
-    group.add_argument("--interval",
+    group.add_argument("-i", "--interval",
                       type=str,
                       help="Log hours for a range of days (e.g., 'Tu-Fr', 'Mo-We')")
     
@@ -435,7 +435,7 @@ Examples:
                               action="store_true", 
                               default=True,
                               help="Run browser in headless mode (default for all modes)")
-    browser_group.add_argument("--no-headless", 
+    browser_group.add_argument("-v", "--no-headless", 
                               action="store_false", 
                               dest="headless",
                               help="Run browser in visible mode (for local debugging)")
