@@ -10,6 +10,8 @@ import argparse
 
 load_dotenv()
 
+WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+BUSINESS_DAYS = WEEKDAYS[0:5]
 
 class AutomatedWorkLogger:
     def __init__(self):
@@ -36,12 +38,11 @@ class AutomatedWorkLogger:
             start_day, end_day = parts[0].strip(), parts[1].strip()
             
             # Validate day abbreviations
-            valid_days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-            if start_day not in valid_days or end_day not in valid_days:
-                raise ValueError(f"Invalid day abbreviation. Use: {', '.join(valid_days)}")
+            if start_day not in WEEKDAYS or end_day not in WEEKDAYS:
+                raise ValueError(f"Invalid day abbreviation. Use: {', '.join(WEEKDAYS)}")
             
             # Map days to indices
-            day_to_index = {day: i for i, day in enumerate(valid_days)}
+            day_to_index = {day: i for i, day in enumerate(WEEKDAYS)}
             start_index = day_to_index[start_day]
             end_index = day_to_index[end_day]
             
@@ -50,13 +51,13 @@ class AutomatedWorkLogger:
             if start_index <= end_index:
                 # Normal range (e.g., Tu-Fr)
                 for i in range(start_index, end_index + 1):
-                    days.append(valid_days[i])
+                    days.append(WEEKDAYS[i])
             else:
                 # Wrap around range (e.g., Fr-Mo)
-                for i in range(start_index, len(valid_days)):
-                    days.append(valid_days[i])
+                for i in range(start_index, len(WEEKDAYS)):
+                    days.append(WEEKDAYS[i])
                 for i in range(0, end_index + 1):
-                    days.append(valid_days[i])
+                    days.append(WEEKDAYS[i])
             
             return days
             
@@ -139,9 +140,8 @@ class AutomatedWorkLogger:
     
     def get_current_weekday(self):
         """Get current weekday abbreviation"""
-        weekdays = {0: "Mo", 1: "Tu", 2: "We", 3: "Th", 4: "Fr", 5: "Sa", 6: "Su"}
         today = datetime.now().weekday()
-        return weekdays.get(today)
+        return WEEKDAYS[today]
     
     def get_weekday_full_name(self, day_abbr):
         """Convert day abbreviation to full name"""
@@ -230,7 +230,7 @@ class AutomatedWorkLogger:
         """Log hours for specified days or full week"""
         if days is None:
             # Default: full work week
-            days = ["Mo", "Tu", "We", "Th", "Fr"]
+            days = BUSINESS_DAYS
         elif isinstance(days, str):
             # Single day passed as string
             days = [days]
@@ -293,8 +293,8 @@ class AutomatedWorkLogger:
                 days_to_log = [current_day]
                 print(f"🗓️  Mode: Single day (Today - {self.get_weekday_full_name(current_day)})")
             elif mode == "day" and specific_day:
-                if specific_day not in ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]:
-                    print(f"❌ Invalid day: {specific_day}. Use Mo, Tu, We, Th, Fr, Sa, Su")
+                if specific_day not in WEEKDAYS:
+                    print(f"❌ Invalid day: {specific_day}. Use {', '.join(WEEKDAYS)}")
                     return
                 days_to_log = [specific_day]
                 print(f"🗓️  Mode: Single day ({self.get_weekday_full_name(specific_day)})")
@@ -303,7 +303,7 @@ class AutomatedWorkLogger:
                 day_names = [self.get_weekday_full_name(day) for day in days_to_log]
                 print(f"🗓️  Mode: Interval ({interval}) - {', '.join(day_names)}")
             else:
-                days_to_log = ["Mo", "Tu", "We", "Th", "Fr"]
+                days_to_log = BUSINESS_DAYS
                 print(f"🗓️  Mode: Full work week (Monday-Friday)")
             
             # Step 1: Get dynamic tasks from Jira
@@ -362,8 +362,8 @@ Examples:
                       action="store_true",
                       help="Log hours only for today (for testing)")
     group.add_argument("--day", 
-                      choices=["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
-                      help="Log hours for a specific day (Mo, Tu, We, Th, Fr, Sa, Su)")
+                      choices=WEEKDAYS,
+                      help=f"Log hours for a specific day ({', '.join(WEEKDAYS)})")
     group.add_argument("--interval",
                       type=str,
                       help="Log hours for a range of days (e.g., 'Tu-Fr', 'Mo-We')")
