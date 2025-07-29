@@ -171,22 +171,25 @@ class AutomatedWorkLogger:
     def login(self):
         """Handle login to the work logging system"""
         print("Navigating to login page...")
-        self.page.goto("https://service-management.coderfull.com/login")
+        self.page.goto("https://service-management.coderfull.com")
         
         # Check if submit button exists (login required)
-        submit_buttons = self.page.locator("button:has-text('Login')")
+        submit_buttons = self.page.locator("button[type='submit']:has-text('Login')")
         has_submit = submit_buttons.count() == 1
         
         if has_submit:
-            print("Login required. Authenticating...")
-            # Fill in credentials
-            self.page.locator("input[label='Username']").fill(os.getenv("SYSTEM_USERNAME"))
-            self.page.locator("input[label='Password']").fill(os.getenv("SYSTEM_PASSWORD"))
-            self.page.locator("button[type='submit']").click()
-            
-            # Wait for navigation after login
-            self.page.wait_for_load_state("networkidle")
-            print("Login successful!")
+            try:
+                print("Login required. Authenticating...")
+                # Fill in credentials
+                self.page.locator("input[label='Username']").fill(os.getenv("SYSTEM_USERNAME"))
+                self.page.locator("input[label='Password']").fill(os.getenv("SYSTEM_PASSWORD"))
+                submit_buttons.click()
+                print("Waiting for login to complete...")
+                
+                self.page.wait_for_selector("button:has-text('Log Hours')", timeout=10000)
+                print("Login successful!")
+            except Exception as e:
+                print(f"❌ Error logging in: {str(e)}, will try to continue without login...")
         else:
             print("Already logged in.")
     
@@ -199,7 +202,7 @@ class AutomatedWorkLogger:
             # Wait for the page to load and try different selectors for the current day
             try:
                 # Try the original selector first
-                self.page.locator(f"span:has-text('{day}')").click(timeout=10000)
+                self.page.locator(f"span:has-text('{day}')").click(timeout=20000)
             except:
                 try:
                     # Alternative selector - might be in a different structure
