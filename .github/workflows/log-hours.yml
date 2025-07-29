@@ -225,6 +225,9 @@ jobs:
         JIRA_SVC_ACCOUNT=${{ secrets.JIRA_SVC_ACCOUNT }}
         JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
         
+        # Schedule configuration (optional - defaults to Friday 10 AM if not set)
+        CRON_SCHEDULE=${{ secrets.CRON_SCHEDULE }}
+        
         # Python environment
         PYTHONPATH=/app
         PYTHONUNBUFFERED=1
@@ -348,8 +351,10 @@ jobs:
         
         # Verify cron is set up
         echo "⏰ Verifying cron schedule..."
-        if docker exec ${{ env.CONTAINER_NAME }} crontab -l | grep -q "0 10 \* \* 5"; then
-          echo "✅ Cron job configured: Every Friday at 10:00 AM"
+        CRON_OUTPUT=$(docker exec ${{ env.CONTAINER_NAME }} crontab -l)
+        if echo "$CRON_OUTPUT" | grep -q "cd /app && python src/loghours.py"; then
+          SCHEDULE=$(echo "$CRON_OUTPUT" | grep "cd /app && python src/loghours.py" | awk '{print $1 " " $2 " " $3 " " $4 " " $5}')
+          echo "✅ Cron job configured with schedule: $SCHEDULE"
         else
           echo "⚠️ Cron job not found or incorrectly configured"
         fi
@@ -372,7 +377,7 @@ jobs:
         echo "| Container | ${{ env.CONTAINER_NAME }} |" >> $GITHUB_STEP_SUMMARY
         echo "| Image | ${{ env.DOCKER_IMAGE }}:latest |" >> $GITHUB_STEP_SUMMARY
         echo "| Path | ${{ env.DEPLOY_PATH }} |" >> $GITHUB_STEP_SUMMARY
-        echo "| Schedule | Every Friday at 10:00 AM |" >> $GITHUB_STEP_SUMMARY
+        echo "| Schedule | ${{ secrets.CRON_SCHEDULE || '0 10 * * 5 (default: Friday 10 AM)' }} |" >> $GITHUB_STEP_SUMMARY
         
         if [ "${{ job.status }}" == "success" ]; then
           echo "🎉 Log Hours DockerHub deployment to VPS completed successfully!"
@@ -381,7 +386,7 @@ jobs:
           echo "📦 Container: ${{ env.CONTAINER_NAME }}"
           echo "📂 Path: ${{ env.DEPLOY_PATH }}"
           echo "🌐 Registry: https://hub.docker.com/r/${{ secrets.DOCKERHUB_USERNAME }}/work-logger"
-          echo "⏰ Next run: Next Friday at 10:00 AM"
+          echo "⏰ Schedule: ${{ secrets.CRON_SCHEDULE || '0 10 * * 5 (default: Friday 10 AM)' }}"
         else
           echo "❌ Log Hours deployment failed!"
           echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY

@@ -1,6 +1,6 @@
 # Automated Work Logger 🤖
 
-Automates work hours logging to service management systems using Playwright web automation. **Runs automatically every Friday at 10:00 AM** when deployed.
+Automates work hours logging to service management systems using Playwright web automation. **Runs on configurable schedule** (defaults to Friday at 10:00 AM) when deployed.
 
 ## Quick Start
 
@@ -24,7 +24,7 @@ python src/loghours.py
 - 🛡️ **Smart error handling** - Multiple fallback selectors + debug screenshots
 - 🐳 **Docker ready** - Containerized deployment with CI/CD pipeline
 - 📦 **Simple dependencies** - Standard pip + requirements.txt (no Poetry conflicts)
-- ⏰ **Automated scheduling** - Runs every Friday at 10:00 AM via cron
+- ⏰ **Automated scheduling** - Configurable cron schedule (defaults to Friday at 10:00 AM)
 
 ## Setup
 
@@ -61,9 +61,12 @@ python src/loghours.py --interval Mo-We  # Monday through Wednesday
 
 ### Docker
 ```bash
-# Build and run with cron scheduling
+# Build and run with default schedule (Friday 10 AM)
 docker build -t log-hours .
 docker run -d --name work-logger log-hours
+
+# Build and run with custom schedule (daily at 2 PM)
+docker run -d --name work-logger -e CRON_SCHEDULE="0 14 * * *" log-hours
 
 # View logs
 docker logs work-logger
@@ -75,9 +78,14 @@ docker run --rm log-hours python src/loghours.py --today
 ## Deployment Behavior
 
 ### 🗓️ **Automated Schedule:**
-- **Runs:** Every Friday at 10:00 AM
+- **Default:** Every Friday at 10:00 AM (`0 10 * * 5`)
+- **Configurable:** Set `CRON_SCHEDULE` environment variable
 - **Logs:** Full week (Monday-Friday) hours
 - **Location:** `/app/logs/cronjob.log` inside container
+
+### ⚙️ **Environment Variables:**
+- `CRON_SCHEDULE` - Cron expression for scheduling (default: `0 10 * * 5`)
+  - Examples: `0 14 * * *` (daily 2 PM), `0 9 * * 1-5` (weekdays 9 AM)
 
 ### 📋 **Container Status:**
 - **Runs continuously** with cron daemon

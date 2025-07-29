@@ -44,6 +44,7 @@ Add these secrets in: Repository → Settings → Secrets and variables → Acti
 | `JIRA_PROJECT` | Project key | `PROJECT_KEY` |
 | `SYSTEM_USERNAME` | System username | `your_username` |
 | `SYSTEM_PASSWORD` | System password | `your_password` |
+| `CRON_SCHEDULE` | Cron schedule expression | `0 10 * * 5` (optional, defaults to Friday 10 AM) |
 
 ## 🚀 Deploy
 
@@ -135,7 +136,7 @@ docker exec work-logger python src/loghours.py --today
 - Multi-platform images (AMD64 + ARM64)
 - Automatic container health monitoring
 - JSON log rotation
-- Cron job runs Fridays at 10 AM
+- Configurable cron job scheduling (defaults to Fridays at 10 AM)
 
 ## 🔒 Security
 

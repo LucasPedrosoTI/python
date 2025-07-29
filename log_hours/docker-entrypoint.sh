@@ -21,10 +21,10 @@ if [ "$#" -gt 0 ]; then
     echo "📝 Executing command: $*"
     exec "$@"
 else
-    echo "⏰ Setting up cron job for Friday 10 AM execution..."
+    echo "⏰ Setting up cron job with schedule: ${CRON_SCHEDULE:-0 10 * * 5}..."
     
-    # Create cron job that runs every Friday at 10 AM
-    echo "0 10 * * 5 cd /app && python src/loghours.py >> /app/logs/cronjob.log 2>&1" | crontab -
+    # Create cron job with configurable schedule (defaults to Friday 10 AM)
+    echo "${CRON_SCHEDULE:-0 10 * * 5} cd /app && python src/loghours.py >> /app/logs/cronjob.log 2>&1" | crontab -
     
     # Verify cron job
     echo "📋 Cron job installed:"
@@ -36,7 +36,7 @@ else
     
     # Keep container running and show periodic status
     echo "✅ Container started successfully!"
-    echo "📅 Work logger will run every Friday at 10:00 AM"
+    echo "📅 Work logger scheduled with: ${CRON_SCHEDULE:-0 10 * * 5}"
     echo "📝 Container will log status every hour..."
     
     # Create a loop to keep container running and show periodic status
@@ -52,7 +52,7 @@ else
         # Log system resource usage periodically  
         if [ $(($(date +%s) % 21600)) -eq 0 ]; then  # Every 6 hours
             echo "📊 System stats: $(free -h | grep Mem | awk '{print "Memory: " $3 "/" $2}')"
-            echo "📅 Next run: $(date -d 'next friday 10:00')"
+            echo "📅 Schedule: ${CRON_SCHEDULE:-0 10 * * 5}"
         fi
         
         sleep 3600  # Log status every hour
