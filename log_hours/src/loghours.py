@@ -193,13 +193,61 @@ class AutomatedWorkLogger:
         else:
             print("Already logged in.")
     
-    def log_hours_for_day(self, day, tasks):
+    def check_if_hours_logged(self, day):
+        """Check if hours are already logged for a specific day"""
+        try:
+            day_name = self.get_weekday_full_name(day)
+            print(f"🔍 Checking if hours are already logged for {day_name} ({day})...")
+            
+            # Click on the day to see if hours are already logged
+            try:
+                self.page.locator(f"span:has-text('{day}')").click(timeout=20000)
+            except:
+                try:
+                    self.page.locator(f"text={day}").click(timeout=10000)
+                except:
+                    print(f"⚠️  Could not find {day} element to check hours")
+                    return False
+            
+            # Wait a moment for the form to load
+            self.page.wait_for_timeout(1000)
+            
+            # Check if task and time inputs have values
+            task_input = self.page.locator("input[name='task']")
+            time_input = self.page.locator("input[name='time']")
+            
+            # Get current values
+            task_value = task_input.input_value() if task_input.count() > 0 else ""
+            time_value = time_input.input_value() if time_input.count() > 0 else ""
+            
+            # Consider hours logged if both task and time have values
+            has_hours = bool(task_value.strip() and time_value.strip())
+            
+            if has_hours:
+                print(f"✅ Hours already logged for {day_name}: {time_value} - {task_value[:50]}...")
+                return True
+            else:
+                print(f"⭕ No hours logged yet for {day_name}")
+                return False
+                
+        except Exception as e:
+            print(f"⚠️  Error checking hours for {day}: {str(e)}")
+            return False
+    
+    def log_hours_for_day(self, day, tasks, override=False):
         """Log hours for a specific day"""
         try:
             day_name = self.get_weekday_full_name(day)
-            print(f"Logging hours for {day_name} ({day})...")
             
-            # Wait for the page to load and try different selectors for the current day
+            # Check if hours are already logged (unless this is part of the check itself)
+            if not override:
+                if self.check_if_hours_logged(day):
+                    print(f"⏭️  Skipping {day_name} - hours already logged (use --override to relog)")
+                    return True  # Consider this a success since hours exist
+            
+            print(f"📝 Logging hours for {day_name} ({day})...")
+            
+            # Navigate to the day (click might have happened in check, but ensure we're there)
             try:
                 # Try the original selector first
                 self.page.locator(f"span:has-text('{day}')").click(timeout=20000)
@@ -222,14 +270,16 @@ class AutomatedWorkLogger:
             
             # Wait a moment for processing
             self.page.wait_for_timeout(1000)
-            print(f"✅ Successfully logged 8 hours for {day_name}")
+            
+            action = "Updated" if override else "Logged"
+            print(f"✅ Successfully {action.lower()} 8 hours for {day_name}")
             return True
             
         except Exception as e:
             print(f"❌ Error logging hours for {day}: {str(e)}")
             return False
     
-    def log_hours_for_week(self, tasks, days=None):
+    def log_hours_for_week(self, tasks, days=None, override=False):
         """Log hours for specified days or full week"""
         if days is None:
             # Default: full work week
@@ -241,9 +291,11 @@ class AutomatedWorkLogger:
         success_count = 0
         total_days = len(days)
         
+        print(f"🔄 Mode: {'Override existing hours' if override else 'Skip days with existing hours'}")
+        
         # Loop through each specified day
         for day in days:
-            if self.log_hours_for_day(day, tasks):
+            if self.log_hours_for_day(day, tasks, override=override):
                 success_count += 1
             
             # Brief pause between days (except for the last one)
@@ -276,13 +328,13 @@ class AutomatedWorkLogger:
         
         # Summary
         if success_count == total_days:
-            print(f"✅ Successfully logged hours for all {total_days} day(s)!")
+            print(f"✅ Successfully processed hours for all {total_days} day(s)!")
         else:
-            print(f"⚠️  Logged hours for {success_count}/{total_days} day(s)")
+            print(f"⚠️  Processed hours for {success_count}/{total_days} day(s)")
         
         return success_count == total_days
     
-    def run(self, mode="week", specific_day=None, interval=None, headless=True):
+    def run(self, mode="week", specific_day=None, interval=None, headless=True, override=False):
         """Main execution method"""
         try:
             print(f"=== Automated Work Logger Started at {datetime.now()} ===")
@@ -322,7 +374,7 @@ class AutomatedWorkLogger:
             self.login()
             
             # Step 4: Log hours for specified days
-            success = self.log_hours_for_week(tasks, days_to_log)
+            success = self.log_hours_for_week(tasks, days_to_log, override=override)
             
             if success:
                 print("\n🎉 Work logging completed successfully!")
@@ -355,8 +407,9 @@ Examples:
   python loghours.py --interval Tu-Fr          # Log hours for Tuesday through Friday
   python loghours.py --interval Mo-We          # Log hours for Monday through Wednesday
   python loghours.py --interval Fr-Mo          # Log hours for Friday through Monday (wrap around)
-  python loghours.py --today --headless        # Log today's hours in headless mode (for Docker/VPS)
+  python loghours.py --today --override        # Log today's hours, overriding existing entries
   python loghours.py --day Fr --no-headless    # Log Friday's hours with visible browser
+  python loghours.py -o                        # Log full week, overriding any existing hours
         """
     )
     
@@ -370,6 +423,11 @@ Examples:
     group.add_argument("--interval",
                       type=str,
                       help="Log hours for a range of days (e.g., 'Tu-Fr', 'Mo-We')")
+    
+    # Override argument
+    parser.add_argument("-o", "--override",
+                       action="store_true",
+                       help="Override existing hours (default: skip days with existing hours)")
     
     # Browser mode arguments
     browser_group = parser.add_mutually_exclusive_group()
@@ -389,13 +447,13 @@ Examples:
     
     try:
         if args.today:
-            logger.run(mode="today", headless=args.headless)
+            logger.run(mode="today", headless=args.headless, override=args.override)
         elif args.day:
-            logger.run(mode="day", specific_day=args.day, headless=args.headless)
+            logger.run(mode="day", specific_day=args.day, headless=args.headless, override=args.override)
         elif args.interval:
-            logger.run(mode="interval", interval=args.interval, headless=args.headless)
+            logger.run(mode="interval", interval=args.interval, headless=args.headless, override=args.override)
         else:
-            logger.run(mode="week", headless=args.headless)
+            logger.run(mode="week", headless=args.headless, override=args.override)
     except ValueError as e:
         print(f"❌ {str(e)}")
         return 1

@@ -58,6 +58,11 @@ python src/loghours.py --day We  # Wednesday
 python src/loghours.py --interval Tu-Fr  # Tuesday through Friday
 python src/loghours.py --interval Mo-We  # Monday through Wednesday
 
+# Override existing hours (default: skip days with existing hours)
+python src/loghours.py --today --override   # Force relog today
+python src/loghours.py --interval Tu-Fr -o  # Force relog interval
+python src/loghours.py -o                   # Force relog entire week
+
 # With/Without Browser
 python src/loghours.py --today --headless
 python src/loghours.py --today --no-headless
