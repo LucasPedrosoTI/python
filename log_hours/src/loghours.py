@@ -4,8 +4,8 @@ import logging
 
 from dotenv import load_dotenv
 
-from automated_work_logger import AutomatedWorkLogger
-from constants import WEEKDAYS
+from .automated_work_logger import AutomatedWorkLogger
+from .constants import WEEKDAYS
 
 load_dotenv()
 

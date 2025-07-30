@@ -54,7 +54,8 @@ jobs:
     - name: Run basic tests
       working-directory: ${{ env.WORKING_DIRECTORY }}
       run: |
-        python -c "from src.loghours import AutomatedWorkLogger; print('✅ Import successful')"
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        python -c "from src.automated_work_logger import AutomatedWorkLogger; print('✅ Import successful')"
 
   build-and-push:
     needs: test
@@ -100,7 +101,7 @@ jobs:
     - name: Test Docker image
       run: |
         echo "🧪 Testing Docker image..."
-        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "from src.loghours import AutomatedWorkLogger; print('✅ Docker import test passed')"
+        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "import sys; sys.path.append('/app'); from src.automated_work_logger import AutomatedWorkLogger; print('✅ Docker import test passed')"
 
   deploy:
     needs: [test, build-and-push]
@@ -347,7 +348,7 @@ jobs:
         
         # Test application
         echo "🧪 Testing application in container..."
-        docker exec ${{ env.CONTAINER_NAME }} python -c "from src.loghours import AutomatedWorkLogger; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
+        docker exec ${{ env.CONTAINER_NAME }} python -c "import sys; sys.path.append('/app'); from src.automated_work_logger import AutomatedWorkLogger; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
         
         # Verify cron is set up
         echo "⏰ Verifying cron schedule..."

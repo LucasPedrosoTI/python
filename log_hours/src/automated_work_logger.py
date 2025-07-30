@@ -7,7 +7,7 @@ from datetime import datetime
 import requests
 from playwright.sync_api import sync_playwright
 
-from constants import WEEKDAYS, BUSINESS_DAYS
+from .constants import WEEKDAYS, BUSINESS_DAYS
 
 logger = logging.getLogger(__name__)
 
