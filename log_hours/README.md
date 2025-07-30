@@ -40,8 +40,7 @@ playwright install chromium
 ```bash
 source venv/bin/activate
 python src/loghours.py
-```
-
+``
 ### Options
 ```bash
 # Log full week (Monday-Friday)
