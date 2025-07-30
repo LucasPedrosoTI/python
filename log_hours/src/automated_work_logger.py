@@ -65,7 +65,7 @@ class AutomatedWorkLogger:
             return days
 
         except Exception as e:
-            raise ValueError(f"Error parsing interval '{interval}': {str(e)}")
+            raise ValueError(f"Error parsing interval '{interval}': {str(e)}") from e
 
     def get_jira_issues(self):
         """Fetch recent Jira issues assigned to the user"""
@@ -119,7 +119,7 @@ class AutomatedWorkLogger:
         try:
             response = requests.get(url, headers=headers, params=params, timeout=30)
         except requests.exceptions.RequestException as e:
-            raise ConnectionError(f"Failed to connect to Jira API: {str(e)}")
+            raise ConnectionError(f"Failed to connect to Jira API: {str(e)}") from e
 
         if response.status_code == 401:
             raise ValueError(
@@ -137,7 +137,7 @@ class AutomatedWorkLogger:
         try:
             data = response.json()
         except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON response from Jira API: {str(e)}")
+            raise ValueError(f"Invalid JSON response from Jira API: {str(e)}") from e
 
         issues = data.get("issues", [])
 
