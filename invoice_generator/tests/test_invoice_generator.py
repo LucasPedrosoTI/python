@@ -4,6 +4,7 @@ import tempfile
 import os
 from datetime import datetime
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 
 # Import the module under test
 from invoice_generator.invoice_generator import InvoiceGenerator
@@ -177,7 +178,7 @@ class TestInvoiceGenerator(unittest.TestCase):
         
         # Verify font and cell calls
         generator.pdf.set_font.assert_called_with('Arial', "B", 16)
-        generator.pdf.cell.assert_called_with(200, 10, "Invoice", ln=True, align="C")
+        generator.pdf.cell.assert_called_with(200, 10, "Invoice", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
     
     @patch('invoice_generator.invoice_generator.load_dotenv')
     @patch('invoice_generator.invoice_generator.os.getenv')
@@ -220,7 +221,7 @@ class TestInvoiceGenerator(unittest.TestCase):
         # Verify client info is added
         self.assertIn(unittest.mock.call('Arial', "B", 12), generator.pdf.set_font.call_args_list)
         self.assertIn(unittest.mock.call('Arial', "", 12), generator.pdf.set_font.call_args_list)
-        generator.pdf.cell.assert_called_with(100, 10, "INVOICE TO:", ln=True)
+        generator.pdf.cell.assert_called_with(100, 10, "INVOICE TO:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         generator.pdf.ln.assert_called_with(10)
     
     @patch('invoice_generator.invoice_generator.load_dotenv')
@@ -240,8 +241,8 @@ class TestInvoiceGenerator(unittest.TestCase):
         
         # Verify invoice details are added
         expected_calls = [
-            unittest.mock.call(100, 10, "INVOICE NUMBER: 2024-06", ln=True),
-            unittest.mock.call(100, 10, "INVOICE DATE: 2024-06-01", ln=True)
+            unittest.mock.call(100, 10, "INVOICE NUMBER: 2024-06", new_x=XPos.LMARGIN, new_y=YPos.NEXT),
+            unittest.mock.call(100, 10, "INVOICE DATE: 2024-06-01", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         ]
         generator.pdf.cell.assert_has_calls(expected_calls)
         generator.pdf.ln.assert_called_with(10)
@@ -264,10 +265,10 @@ class TestInvoiceGenerator(unittest.TestCase):
         # Verify amounts are added (January 2024: 23 business days * 8 hours * $25 = $4600)
         expected_total = 4600
         expected_calls = [
-            unittest.mock.call(100, 10, f"AMOUNT DUE: $ {expected_total:,.2f}", ln=True),
-            unittest.mock.call(100, 10, f"SUBTOTAL: $ {expected_total:,.2f}", ln=True),
-            unittest.mock.call(100, 10, "TAX (0.0%): $ 0,00", ln=True),
-            unittest.mock.call(100, 10, f"TOTAL: $ {expected_total:,.2f}", ln=True)
+            unittest.mock.call(100, 10, f"AMOUNT DUE: $ {expected_total:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT),
+            unittest.mock.call(100, 10, f"SUBTOTAL: $ {expected_total:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT),
+            unittest.mock.call(100, 10, "TAX (0.0%): $ 0,00", new_x=XPos.LMARGIN, new_y=YPos.NEXT),
+            unittest.mock.call(100, 10, f"TOTAL: $ {expected_total:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         ]
         generator.pdf.cell.assert_has_calls(expected_calls)
         generator.pdf.ln.assert_called_with(10)
@@ -293,7 +294,7 @@ class TestInvoiceGenerator(unittest.TestCase):
             unittest.mock.call(40, 10, "Item", border=1),
             unittest.mock.call(80, 10, "Description", border=1),
             unittest.mock.call(30, 10, "Quantity", border=1),
-            unittest.mock.call(40, 10, "Unit Cost", border=1, ln=True),
+            unittest.mock.call(40, 10, "Unit Cost", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT),
             # Table row
             unittest.mock.call(40, 10, "01", border=1),
             unittest.mock.call(80, 10, "IT SERVICES", border=1),

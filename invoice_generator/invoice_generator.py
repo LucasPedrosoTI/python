@@ -1,4 +1,5 @@
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 from datetime import datetime
 try:
     from invoice_generator.monthly_hours_calculator import MonthlyHoursCalculator
@@ -102,26 +103,26 @@ class InvoiceGenerator:
     def _add_header(self):
         """Add the invoice header."""
         self.pdf.set_font(self.font_family, "B", 16)
-        self.pdf.cell(200, 10, "Invoice", ln=True, align="C")
+        self.pdf.cell(200, 10, "Invoice", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
     
     def _add_company_info(self):
         """Add company information section."""
         self.pdf.set_font(self.font_family, "B", 12)
-        self.pdf.cell(100, 10, "INVOICE FROM:", ln=True)
+        self.pdf.cell(100, 10, "INVOICE FROM:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         self.pdf.set_font(self.font_family, "", 12)
-        self.pdf.cell(100, 10, self.company_name, ln=True)
-        self.pdf.cell(100, 10, self.company_address, ln=True)
-        self.pdf.cell(100, 10, self.company_city_state, ln=True)
-        self.pdf.cell(100, 10, self.company_country, ln=True)
-        self.pdf.cell(100, 10, self.company_email, ln=True)
+        self.pdf.cell(100, 10, self.company_name, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, self.company_address, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, self.company_city_state, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, self.company_country, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, self.company_email, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         self.pdf.ln(10)
     
     def _add_client_info(self):
         """Add client information section."""
         self.pdf.set_font(self.font_family, "B", 12)
-        self.pdf.cell(100, 10, "INVOICE TO:", ln=True)
+        self.pdf.cell(100, 10, "INVOICE TO:", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         self.pdf.set_font(self.font_family, "", 12)
         self.pdf.multi_cell(0, 10, 
@@ -135,17 +136,17 @@ class InvoiceGenerator:
     
     def _add_invoice_details(self):
         """Add invoice number and date."""
-        self.pdf.cell(100, 10, f"INVOICE NUMBER: {self.invoice_number}", ln=True)
-        self.pdf.cell(100, 10, f"INVOICE DATE: {self.invoice_date}", ln=True)
+        self.pdf.cell(100, 10, f"INVOICE NUMBER: {self.invoice_number}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, f"INVOICE DATE: {self.invoice_date}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         self.pdf.ln(10)
     
     def _add_amounts(self):
         """Add amount calculations section."""
-        self.pdf.cell(100, 10, f"AMOUNT DUE: $ {self.total_amount:,.2f}", ln=True)
-        self.pdf.cell(100, 10, f"SUBTOTAL: $ {self.total_amount:,.2f}", ln=True)
-        self.pdf.cell(100, 10, "TAX (0.0%): $ 0,00", ln=True)
-        self.pdf.cell(100, 10, f"TOTAL: $ {self.total_amount:,.2f}", ln=True)
+        self.pdf.cell(100, 10, f"AMOUNT DUE: $ {self.total_amount:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, f"SUBTOTAL: $ {self.total_amount:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, "TAX (0.0%): $ 0,00", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        self.pdf.cell(100, 10, f"TOTAL: $ {self.total_amount:,.2f}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         self.pdf.ln(10)
     
@@ -155,7 +156,7 @@ class InvoiceGenerator:
         self.pdf.cell(40, 10, "Item", border=1)
         self.pdf.cell(80, 10, "Description", border=1)
         self.pdf.cell(30, 10, "Quantity", border=1)
-        self.pdf.cell(40, 10, "Unit Cost", border=1, ln=True)
+        self.pdf.cell(40, 10, "Unit Cost", border=1, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         
         # Table row
         self.pdf.cell(40, 10, "01", border=1)
