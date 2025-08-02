@@ -16,7 +16,7 @@ class InvoiceGenerator:
     Handles configuration loading, invoice data calculation, and PDF generation.
     """
     
-    def __init__(self, year=None, month=None, hours_per_day=8):
+    def __init__(self, year=None, month=None, hours_per_day=8, holidays=0):
         """
         Initialize the InvoiceGenerator with configuration and invoice data.
         
@@ -24,6 +24,7 @@ class InvoiceGenerator:
             year (int, optional): Invoice year. Defaults to current year.
             month (int, optional): Invoice month. Defaults to previous month.
             hours_per_day (int, optional): Hours per business day. Defaults to 8.
+            holidays (int, optional): Number of holiday days to subtract. Defaults to 0.
         """
         # Load environment variables
         load_dotenv()
@@ -37,10 +38,11 @@ class InvoiceGenerator:
         # Initialize the hours calculator
         self.hours_calculator = MonthlyHoursCalculator(hours_per_day)
         
-        # Set invoice date
+        # Set invoice date and store holidays
         now = datetime.now()
         self.year = year or now.year
         self.month = month or (now.month - 1 if now.month > 1 else 12)
+        self.holidays = holidays
         
         # Calculate invoice data
         self._calculate_invoice_data()
@@ -93,7 +95,7 @@ class InvoiceGenerator:
         self.invoice_number = f"{self.year}-{self.month:02d}"
         self.invoice_date = f"{self.invoice_number}-01"
         
-        self.monthly_hours = self.hours_calculator.calc_monthly_hours(self.year, self.month)
+        self.monthly_hours = self.hours_calculator.calc_monthly_hours(self.year, self.month, self.holidays)
         self.total_amount = self.hourly_rate * self.monthly_hours
     
     def _create_pdf(self):

@@ -409,6 +409,44 @@ class TestInvoiceGenerator(unittest.TestCase):
         # January 2024: 23 business days * 8 hours * $30 = $5520
         self.assertEqual(generator.total_amount, 5520)
 
+    @patch('invoice_generator.invoice_generator.os.getenv')
+    @patch('invoice_generator.invoice_generator.load_dotenv')
+    def test_init_with_holidays(self, mock_load_dotenv, mock_getenv):
+        """Test initialization with holidays parameter."""
+        # Mock required environment variables
+        mock_env_vars = {
+            'CLIENT_NAME': 'Test Client',
+            'CLIENT_ADDRESS': 'Test Address',
+            'CLIENT_EMAIL': 'test@client.com',
+            'CLIENT_TAX_ID': 'TAX123',
+            'COMPANY_NAME': 'Test Company',
+            'COMPANY_ADDRESS': 'Test Company Address',
+            'COMPANY_CITY_STATE': 'Test City, State',
+            'COMPANY_COUNTRY': 'Test Country',
+            'COMPANY_EMAIL': 'test@company.com',
+            'HOURLY_RATE': '50',
+        }
+        
+        mock_getenv.side_effect = lambda key, default=None: mock_env_vars.get(key, default)
+        
+        # Test with 1 holiday
+        generator = InvoiceGenerator(year=2024, month=1, holidays=1)
+        
+        # Verify holidays are stored
+        self.assertEqual(generator.holidays, 1)
+        
+        # January 2024: 23 business days - 1 holiday = 22 working days
+        # 22 working days * 8 hours * $50 = $8800
+        self.assertEqual(generator.monthly_hours, 176)  # 22 * 8
+        self.assertEqual(generator.total_amount, 8800)  # 176 * 50
+        
+        # Test with 0 holidays (default)
+        generator_no_holidays = InvoiceGenerator(year=2024, month=1)
+        self.assertEqual(generator_no_holidays.holidays, 0)
+        # January 2024: 23 business days * 8 hours * $50 = $9200
+        self.assertEqual(generator_no_holidays.monthly_hours, 184)  # 23 * 8
+        self.assertEqual(generator_no_holidays.total_amount, 9200)  # 184 * 50
+
 
 if __name__ == '__main__':
     unittest.main() 

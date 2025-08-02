@@ -37,6 +37,7 @@ Examples:
   %(prog)s                           # Generate invoice for current month
   %(prog)s --year 2024 --month 1     # Generate invoice for January 2024
   %(prog)s --hours-per-day 6         # Generate with 6 hours per day
+  %(prog)s --holidays 1              # Subtract 1 holiday from business days
   %(prog)s --output ./invoices       # Save to custom directory
         """
     )
@@ -47,6 +48,8 @@ Examples:
                        help='Invoice month 1-12 (default: previous month)')
     parser.add_argument('--hours-per-day', '-H', type=int, default=8,
                        help='Hours per business day (default: 8)')
+    parser.add_argument('--holidays', type=int, default=0,
+                       help='Number of holiday days to subtract from business days (default: 0)')
     parser.add_argument('--output', '-o', type=str,
                        help='Output directory (default: ./output)')
     parser.add_argument('--version', action='version', version='Invoice Generator 1.0')
@@ -61,11 +64,15 @@ Examples:
         generator = InvoiceGenerator(
             year=args.year,
             month=args.month,
-            hours_per_day=args.hours_per_day
+            hours_per_day=args.hours_per_day,
+            holidays=args.holidays
         )
         
         print(f"📅 Generating invoice for: {generator.year}-{generator.month:02d}")
         print(f"⏰ Hours per day: {generator.hours_calculator.hours_per_day}")
+        if generator.holidays > 0:
+            business_days = generator.hours_calculator.calc_business_days(generator.year, generator.month)
+            print(f"📊 Business days: {business_days} (minus {generator.holidays} holidays = {business_days - generator.holidays} working days)")
         print(f"📊 Total hours: {generator.monthly_hours}")
         print(f"💰 Total amount: ${generator.total_amount:,.2f}")
         

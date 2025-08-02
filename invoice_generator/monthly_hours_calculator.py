@@ -15,19 +15,21 @@ class MonthlyHoursCalculator:
         """
         self.hours_per_day = hours_per_day
     
-    def calc_monthly_hours(self, year: int, month: int) -> int:
+    def calc_monthly_hours(self, year: int, month: int, holidays: int = 0) -> int:
         """
         Calculate the total working hours for a given month.
         
         Args:
             year (int): The year
             month (int): The month (1-12)
+            holidays (int): Number of holiday days to subtract from business days
             
         Returns:
             int: Total working hours for the month
         """
         business_days = self.calc_business_days(year, month)
-        return business_days * self.hours_per_day
+        working_days = max(0, business_days - holidays)  # Ensure we don't go negative
+        return working_days * self.hours_per_day
     
     def calc_business_days(self, year: int, month: int) -> int:
         """

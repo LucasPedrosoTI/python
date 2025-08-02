@@ -60,6 +60,9 @@ poetry run python cli.py --year 2024 --month 3
 # Generate with custom hours per day
 poetry run python cli.py --hours-per-day 6
 
+# Subtract holidays from business days
+poetry run python cli.py --holidays 1
+
 # Save to custom directory
 poetry run python cli.py --output ./my_invoices
 ```
@@ -147,6 +150,9 @@ C:\InvoiceGenerator\InvoiceGenerator.exe --year 2024 --month 3
 # Generate with custom hours per day
 C:\InvoiceGenerator\InvoiceGenerator.exe --hours-per-day 6
 
+# Subtract holidays from business days
+C:\InvoiceGenerator\InvoiceGenerator.exe --holidays 1
+
 # Save to custom directory
 C:\InvoiceGenerator\InvoiceGenerator.exe --output C:\MyInvoices
 
@@ -158,6 +164,7 @@ C:\InvoiceGenerator\InvoiceGenerator.exe --help
 - `--year, -y`: Invoice year (default: current year)
 - `--month, -m`: Invoice month 1-12 (default: previous month)
 - `--hours-per-day, -H`: Hours per business day (default: 8)
+- `--holidays`: Number of holiday days to subtract from business days (default: 0)
 - `--output, -o`: Output directory (default: ./output)
 - `--version`: Show version information
 - `--help`: Show help message
@@ -174,15 +181,22 @@ C:\InvoiceGenerator\InvoiceGenerator.exe --help
 
 The Invoice Generator automatically:
 1. Calculates business days (Monday-Friday) for the specified month
-2. Multiplies business days × hours per day to get total hours
-3. Calculates total amount (total hours × hourly rate)
-4. Generates a professional PDF invoice
-5. Automatically opens the PDF when complete
+2. Subtracts any holidays from the business days count
+3. Multiplies working days × hours per day to get total hours
+4. Calculates total amount (total hours × hourly rate)
+5. Generates a professional PDF invoice
+6. Automatically opens the PDF when complete
 
 ### Example Calculations
+**Without holidays:**
 - **January 2024**: 23 business days × 8 hours = 184 hours
 - **February 2024**: 21 business days × 8 hours = 168 hours
 - **March 2024**: 21 business days × 8 hours = 168 hours
+
+**With holidays:**
+- **January 2024 (1 holiday)**: (23 - 1) = 22 working days × 8 hours = 176 hours
+- **November 2024 (2 holidays)**: (21 - 2) = 19 working days × 8 hours = 152 hours
+- **December 2024 (3 holidays)**: (22 - 3) = 19 working days × 8 hours = 152 hours
 
 ## 🔧 Troubleshooting
 
