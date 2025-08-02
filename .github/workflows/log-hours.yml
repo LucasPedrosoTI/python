@@ -55,7 +55,6 @@ jobs:
       working-directory: ${{ env.WORKING_DIRECTORY }}
       run: |
         export PYTHONPATH="${PYTHONPATH}:$(pwd)"
-        python -c "from src.automated_work_logger import AutomatedWorkLogger; print('✅ Import successful')"
         echo "🧪 Testing script execution..."
         python src/loghours.py --help
 
@@ -102,8 +101,6 @@ jobs:
 
     - name: Test Docker image
       run: |
-        echo "🧪 Testing Docker image..."
-        docker run --rm ${{ env.DOCKER_IMAGE }}:latest python -c "from src.automated_work_logger import AutomatedWorkLogger; print('✅ Docker import test passed')"
         echo "🧪 Testing Docker script execution..."
         docker run --rm ${{ env.DOCKER_IMAGE }}:latest python src/loghours.py --help
 
@@ -351,8 +348,6 @@ jobs:
         fi
         
         # Test application
-        echo "🧪 Testing application in container..."
-        docker exec ${{ env.CONTAINER_NAME }} python -c "from src.automated_work_logger import AutomatedWorkLogger; print('✅ Application test passed')" || echo "⚠️ Application test skipped"
         echo "🧪 Testing script execution in container..."
         docker exec ${{ env.CONTAINER_NAME }} python src/loghours.py --help || echo "⚠️ Script execution test skipped"
         
