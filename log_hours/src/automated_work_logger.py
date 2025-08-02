@@ -8,6 +8,7 @@ import requests
 from playwright.sync_api import sync_playwright
 
 from constants import WEEKDAYS, BUSINESS_DAYS
+from services.whatsapp_service import WhatsAppService
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ class AutomatedWorkLogger:
         self.browser = None
         self.context = None
         self.page = None
+        self.whatsapp_service = WhatsAppService()
         self.ensure_screenshots_directory()
 
     def ensure_screenshots_directory(self):
@@ -293,9 +295,14 @@ class AutomatedWorkLogger:
                     # If still not found, take a screenshot for debugging
                     debug_screenshot = f"screenshots/debug_screenshot_{day}.png"
                     self.page.screenshot(path=debug_screenshot)
-                    raise Exception(
-                        f"Could not find {day} element. Screenshot saved as {debug_screenshot}"
+                    error_msg = f"Could not find {day} element. Screenshot saved as {debug_screenshot}"
+                    # Send debug notification via WhatsApp
+                    self.whatsapp_service.send_debug_notification(
+                        date=day,
+                        debug_info=f"Element not found for day: {day}",
+                        screenshot_path=debug_screenshot
                     )
+                    raise Exception(error_msg)
 
             # Fill in task details
             self.page.locator("input[name='task']").fill(tasks)
@@ -372,9 +379,25 @@ class AutomatedWorkLogger:
         # Summary
         if success_count == total_days:
             logger.info(f"✅ Successfully processed hours for all {total_days} day(s)!")
+            # Send success notification via WhatsApp
+            date_info = f"{total_days} day(s)"
+            hours_info = f"Processed {success_count}/{total_days} days"
+            self.whatsapp_service.send_success_notification(
+                date=date_info,
+                screenshot_path=screenshot_path,
+                hours_logged=hours_info
+            )
         else:
             logger.warning(
                 f"⚠️  Processed hours for {success_count}/{total_days} day(s)"
+            )
+            # Send partial success notification via WhatsApp
+            date_info = f"{total_days} day(s) attempted"
+            error_msg = f"Only {success_count}/{total_days} days processed successfully"
+            self.whatsapp_service.send_error_notification(
+                date=date_info,
+                error_message=error_msg,
+                screenshot_path=screenshot_path
             )
 
         return success_count == total_days
@@ -444,10 +467,18 @@ class AutomatedWorkLogger:
         except Exception as e:
             logger.error(f"❌ Error in main execution: {str(e)}")
             # Take screenshot for debugging
+            error_screenshot = None
             if self.page:
                 error_screenshot = f"screenshots/error_screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
                 self.page.screenshot(path=error_screenshot)
                 logger.error(f"Error screenshot saved as '{error_screenshot}'")
+            
+            # Send general error notification via WhatsApp
+            self.whatsapp_service.send_error_notification(
+                date="execution",
+                error_message=f"Main execution failed: {str(e)}",
+                screenshot_path=error_screenshot
+            )
         finally:
             # Always cleanup browser resources
             self.teardown_browser()

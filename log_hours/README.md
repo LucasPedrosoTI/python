@@ -25,6 +25,7 @@ python src/loghours.py
 - 🐳 **Docker ready** - Containerized deployment with CI/CD pipeline
 - 📦 **Simple dependencies** - Standard pip + requirements.txt (no Poetry conflicts)
 - ⏰ **Automated scheduling** - Configurable cron schedule (defaults to Friday at 10:00 AM)
+- 📱 **WhatsApp notifications** - Real-time notifications via Evolution API integration
 
 ## Setup
 
@@ -67,6 +68,13 @@ python src/loghours.py --today --headless
 python src/loghours.py --today --no-headless
 ```
 
+### Run tests
+
+```bash
+# Run tests
+python -m pytest src/tests/
+```
+
 ### Docker
 ```bash
 # Build and run with default schedule (Friday 10 AM)
@@ -92,8 +100,20 @@ docker run --rm log-hours python src/loghours.py --today
 - **Location:** `/app/logs/cronjob.log` inside container
 
 ### ⚙️ **Environment Variables:**
+
+#### Core Configuration:
 - `CRON_SCHEDULE` - Cron expression for scheduling (default: `0 10 * * 5`)
   - Examples: `0 14 * * *` (daily 2 PM), `0 9 * * 1-5` (weekdays 9 AM)
+- `SYSTEM_USERNAME` - Login credentials for the work logging system
+- `SYSTEM_PASSWORD` - Login password for the work logging system
+
+#### WhatsApp Integration:
+- `WHATSAPP_ENABLED` - Enable/disable WhatsApp notifications (`true`/`false`)
+- `WHATSAPP_API_URL` - Evolution API base URL (e.g., `https://your-api.com`)
+- `WHATSAPP_API_KEY` - Your Evolution API key
+- `WHATSAPP_INSTANCE` - WhatsApp instance name (e.g., `personal`)
+- `WHATSAPP_RECIPIENT` - Default recipient (phone number or group ID)
+  - Format: `5511999999999@c.us` (individual) or `112233445566@g.us` (group)
 
 ### 📋 **Container Status:**
 - **Runs continuously** with cron daemon
@@ -117,6 +137,65 @@ log_hours/
 
 **Production:** `playwright`, `python-dotenv`, `requests`
 **Development:** Adds `pytest`, `black`, `flake8`, `isort`
+
+## WhatsApp Integration 📱
+
+The application can send real-time notifications via WhatsApp using the Evolution API.
+
+### Setup Evolution API
+
+1. Deploy your Evolution API instance
+2. Create a WhatsApp instance (e.g., `personal`)
+3. Connect your WhatsApp account
+4. Get your API key from the dashboard
+
+### Configuration
+
+Add these environment variables to your `.env` file:
+
+```env
+# WhatsApp Configuration
+WHATSAPP_ENABLED=true
+WHATSAPP_API_URL=https://wpp.evolution.com.br
+WHATSAPP_API_KEY=your_api_key_here
+WHATSAPP_INSTANCE=personal
+WHATSAPP_RECIPIENT=112233445566@g.us
+```
+
+### Notification Types
+
+#### ✅ Success Notifications
+- Sent when hours are logged successfully
+- Includes verification screenshot
+- Shows summary of logged hours
+
+#### ❌ Error Notifications  
+- Login failures
+- Element finding errors
+- General execution errors
+- Includes error screenshots for debugging
+
+#### 🔧 Debug Notifications
+- Element not found issues
+- Page loading problems
+- Includes debug screenshots
+
+### Testing WhatsApp Integration
+
+```bash
+# Test the WhatsApp service
+python src/loghours.py --wp-test
+```
+
+### Troubleshooting WhatsApp
+
+| Issue | Solution |
+|-------|----------|
+| Messages not sending | Check `WHATSAPP_ENABLED=true` and API credentials |
+| Wrong recipient | Verify `WHATSAPP_RECIPIENT` format (phone@c.us or group@g.us) |
+| API connection failed | Test your Evolution API URL in browser |
+| Instance not found | Ensure WhatsApp instance is connected in Evolution dashboard |
+| Images not sending | Check screenshot directory permissions and file existence |
 
 ## Troubleshooting
 

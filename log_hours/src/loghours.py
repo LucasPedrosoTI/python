@@ -35,6 +35,7 @@ Examples:
   python loghours.py -t --override        # Log today's hours, overriding existing entries
   python loghours.py -d Fr -v    # Log Friday's hours with visible browser
   python loghours.py -o                        # Log full week, overriding any existing hours
+  python loghours.py --wp-test                  # Test WhatsApp connection
         """,
     )
 
@@ -90,6 +91,12 @@ Examples:
         help="Set logging level (default: INFO)",
     )
 
+    # WhatsApp test argument
+    parser.add_argument(
+        "--wp-test",
+        action="store_true",
+        help="Test WhatsApp connection",
+    )
     args = parser.parse_args()
 
     # Set logging level based on argument
@@ -99,6 +106,9 @@ Examples:
     work_logger = AutomatedWorkLogger()
 
     try:
+        if args.wp_test:
+            work_logger.whatsapp_service.test_connection()
+            return 0
         if args.today:
             work_logger.run(
                 mode="today", headless=args.headless, override=args.override

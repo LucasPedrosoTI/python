@@ -2,5 +2,7 @@
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter"
   },
-  "python.formatting.provider": "none"
+  "python.formatting.provider": "none",
+  "python.pythonPath": "../log_hours/venv/bin/python",
+  "python.defaultInterpreterPath": "../log_hours/venv/bin/python"
 }

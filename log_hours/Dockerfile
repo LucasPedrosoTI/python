@@ -34,6 +34,6 @@ RUN chmod +x /docker-entrypoint.sh
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD pgrep -f cron > /dev/null && python src/loghours.py --help > /dev/null || exit 1
+    CMD pgrep -f cron > /dev/null && python src/loghours.py --help > /dev/null && python src/loghours.py --wp-test > /dev/null || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"] 

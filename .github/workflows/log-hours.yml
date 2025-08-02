@@ -135,6 +135,15 @@ jobs:
         [[ -z "${{ secrets.JIRA_SVC_ACCOUNT }}" ]] && missing_secrets+=("JIRA_SVC_ACCOUNT")
         [[ -z "${{ secrets.JIRA_API_TOKEN }}" ]] && missing_secrets+=("JIRA_API_TOKEN")
         
+        # Check if whatsapp is enabled
+        if [[ -z "${{ secrets.WHATSAPP_ENABLED }}" ]]; then
+          [[ -z "${{ secrets.WHATSAPP_RECIPIENT }}" ]] && missing_secrets+=("WHATSAPP_RECIPIENT")
+          [[ -z "${{ secrets.WHATSAPP_API_KEY }}" ]] && missing_secrets+=("WHATSAPP_API_KEY")
+          [[ -z "${{ secrets.WHATSAPP_API_URL }}" ]] && missing_secrets+=("WHATSAPP_API_URL")
+          [[ -z "${{ secrets.WHATSAPP_INSTANCE }}" ]] && missing_secrets+=("WHATSAPP_INSTANCE")
+
+        fi
+        
         if [ ${#missing_secrets[@]} -ne 0 ]; then
           echo "❌ Missing required secrets in 'main' environment:"
           printf " - %s\n" "${missing_secrets[@]}"
@@ -226,6 +235,13 @@ jobs:
         JIRA_PROJECT=${{ secrets.JIRA_PROJECT }}
         JIRA_SVC_ACCOUNT=${{ secrets.JIRA_SVC_ACCOUNT }}
         JIRA_API_TOKEN=${{ secrets.JIRA_API_TOKEN }}
+
+        # WhatsApp credentials
+        WHATSAPP_ENABLED=${{ secrets.WHATSAPP_ENABLED }}
+        WHATSAPP_RECIPIENT=${{ secrets.WHATSAPP_RECIPIENT }}
+        WHATSAPP_API_KEY=${{ secrets.WHATSAPP_API_KEY }}
+        WHATSAPP_API_URL=${{ secrets.WHATSAPP_API_URL }}
+        WHATSAPP_INSTANCE=${{ secrets.WHATSAPP_INSTANCE }}
         
         # Schedule configuration (optional - defaults to Friday 10 AM if not set)
         CRON_SCHEDULE=${{ secrets.CRON_SCHEDULE }}
@@ -350,6 +366,10 @@ jobs:
         # Test application
         echo "🧪 Testing script execution in container..."
         docker exec ${{ env.CONTAINER_NAME }} python src/loghours.py --help || echo "⚠️ Script execution test skipped"
+
+        # Test WhatsApp connection
+        echo "🧪 Testing WhatsApp connection..."
+        docker exec ${{ env.CONTAINER_NAME }} python src/loghours.py --wp-test || echo "⚠️ WhatsApp connection test skipped"
         
         # Verify cron is set up
         echo "⏰ Verifying cron schedule..."
