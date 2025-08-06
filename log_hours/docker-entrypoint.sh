@@ -27,11 +27,16 @@ else
     # Export environment variables to a file that cron can source
     echo "📝 Exporting environment variables for cron..."
     # Write environment variables with 'export' prefix so they're available to child processes
+    # Include Playwright-related variables (PLAYWRIGHT_BROWSERS_PATH, etc.)
     # Use while loop to properly handle values with special characters
-    printenv | grep -E '^(JIRA_|WHATSAPP_|SYSTEM_|PYTHONPATH|PYTHONUNBUFFERED|PATH)' | while IFS='=' read -r key value; do
+    printenv | grep -E '^(JIRA_|WHATSAPP_|SYSTEM_|PYTHONPATH|PYTHONUNBUFFERED|PATH|PLAYWRIGHT|NODE_)' | while IFS='=' read -r key value; do
         # Properly escape the value and write with export
         printf "export %s=\"%s\"\n" "$key" "$value"
     done > /app/.env.cron
+    
+    # Also add HOME variable which Playwright uses to find browser cache
+    # Ensure HOME is set to /root for the root user
+    echo "export HOME=\"/root\"" >> /app/.env.cron
     
     # Show what environment variables were exported (without revealing sensitive values)
     echo "📋 Exported environment variables:"

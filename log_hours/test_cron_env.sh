@@ -40,8 +40,8 @@ env -i /bin/bash -c '
     
     echo "Testing Python can see environment variables..."
     cd /app
-    python -c "import os; print(f\"  Python sees JIRA_USERNAME: {os.getenv(\"JIRA_USERNAME\", \"NOT SET\")}\")"
-    python -c "import os; print(f\"  Python sees PYTHONPATH: {os.getenv(\"PYTHONPATH\", \"NOT SET\")}\")"
+    python -c "import os; print(f\"  Python sees JIRA_USERNAME: {os.getenv('JIRA_USERNAME', 'NOT SET')}\")"
+    python -c "import os; print(f\"  Python sees PYTHONPATH: {os.getenv('PYTHONPATH', 'NOT SET')}\")"
     echo ""
     
     echo "Testing full script execution..."
