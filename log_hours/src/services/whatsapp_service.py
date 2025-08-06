@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime
 import logging
 from mimetypes import MimeTypes
 import os
@@ -103,7 +104,7 @@ class WhatsAppService:
         
         payload = {
             "number": recipient,
-            "text": message,
+            "text": f"Work Logger - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: {message}",
         }
         
         try:
@@ -325,7 +326,7 @@ class WhatsAppService:
             # Test with a simple API status check
             url = f"{self.api_url}"
             response = self.session.get(url, timeout=10)
-            
+            self.send_text_message("WhatsApp API connection test successful")
             if response.status_code == 200:
                 logger.info("✅ WhatsApp API connection test successful")
                 return True
