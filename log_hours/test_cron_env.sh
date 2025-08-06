@@ -38,12 +38,6 @@ env -i /bin/bash -c '
     echo "  WHATSAPP_ENABLED=$WHATSAPP_ENABLED"
     echo ""
     
-    echo "Testing Python can see environment variables..."
-    cd /app
-    python -c "import os; print(f\"  Python sees JIRA_USERNAME: {os.getenv('JIRA_USERNAME', 'NOT SET')}\")"
-    python -c "import os; print(f\"  Python sees PYTHONPATH: {os.getenv('PYTHONPATH', 'NOT SET')}\")"
-    echo ""
-    
     echo "Testing full script execution..."
     python src/loghours.py --help 2>&1 | head -n 3
     echo ""
