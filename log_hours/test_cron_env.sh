@@ -8,7 +8,10 @@ echo ""
 if [ -f /app/.env.cron ]; then
     echo "✅ Environment file exists: /app/.env.cron"
     echo "📋 Contents (masked):"
-    cat /app/.env.cron | sed 's/=.*/=***/' | sort
+    cat /app/.env.cron | sed 's/export //' | sed 's/=.*/=***/' | sort
+    echo ""
+    echo "📋 Format check (first 3 lines):"
+    head -n 3 /app/.env.cron | sed 's/=".*$/="***"/'
     echo ""
 else
     echo "❌ Environment file not found: /app/.env.cron"
@@ -32,12 +35,21 @@ env -i /bin/bash -c '
     echo "  PATH=$PATH"
     echo "  PYTHONPATH=$PYTHONPATH"
     echo "  JIRA_USERNAME=$JIRA_USERNAME"
+    echo "  WHATSAPP_ENABLED=$WHATSAPP_ENABLED"
     echo ""
     
-    echo "Testing Python import..."
+    echo "Testing Python can see environment variables..."
     cd /app
-    python src/loghours.py --help 
-    python src/loghours.py --wp-test 
+    python -c "import os; print(f\"  Python sees JIRA_USERNAME: {os.getenv(\"JIRA_USERNAME\", \"NOT SET\")}\")"
+    python -c "import os; print(f\"  Python sees PYTHONPATH: {os.getenv(\"PYTHONPATH\", \"NOT SET\")}\")"
+    echo ""
+    
+    echo "Testing full script execution..."
+    python src/loghours.py --help 2>&1 | head -n 3
+    echo ""
+    
+    echo "Testing with --today flag..."
+    python src/loghours.py --today
 '
 
 echo ""

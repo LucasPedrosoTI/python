@@ -26,11 +26,16 @@ else
     
     # Export environment variables to a file that cron can source
     echo "📝 Exporting environment variables for cron..."
-    printenv | grep -E '^(JIRA_|WHATSAPP_|SYSTEM_|PYTHONPATH|PYTHONUNBUFFERED|PATH)' > /app/.env.cron
+    # Write environment variables with 'export' prefix so they're available to child processes
+    # Use while loop to properly handle values with special characters
+    printenv | grep -E '^(JIRA_|WHATSAPP_|SYSTEM_|PYTHONPATH|PYTHONUNBUFFERED|PATH)' | while IFS='=' read -r key value; do
+        # Properly escape the value and write with export
+        printf "export %s=\"%s\"\n" "$key" "$value"
+    done > /app/.env.cron
     
     # Show what environment variables were exported (without revealing sensitive values)
     echo "📋 Exported environment variables:"
-    cat /app/.env.cron | sed 's/=.*/=***/' | sort
+    cat /app/.env.cron | sed 's/export //' | sed 's/=.*/=***/' | sort
     
     # Create cron job with proper environment loading
     # The cron job will:
