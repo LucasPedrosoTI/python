@@ -3,6 +3,7 @@ import unittest
 from unittest.mock import patch, MagicMock, mock_open
 import tempfile
 import requests
+from datetime import datetime
 
 import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -79,7 +80,7 @@ class TestWhatsAppService(unittest.TestCase):
         # Verify the payload structure matches the new format
         payload = call_args.kwargs['json']
         self.assertEqual(payload['number'], '1234567890@c.us')
-        self.assertEqual(payload['text'], 'Test message')
+        self.assertEqual(payload['text'], f'Work Logger - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}: Test message')
 
     @patch('services.whatsapp_service.requests.Session.post')
     def test_send_text_message_failure(self, mock_post):

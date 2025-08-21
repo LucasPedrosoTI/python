@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 import requests
+from requests.auth import HTTPBasicAuth
 from playwright.sync_api import sync_playwright
 
 from constants import WEEKDAYS, BUSINESS_DAYS
@@ -106,20 +107,21 @@ class AutomatedWorkLogger:
         jql = f'project = {jira_project} AND assignee = "{jira_username}" AND updated >= -5d AND type IN standardIssueTypes()'
 
         # API endpoint
-        url = f"{jira_url}/rest/api/2/search"
+        url = f"{jira_url}/rest/api/3/search/jql"
+
+        auth = HTTPBasicAuth(jira_svc_account, jira_api_token)
 
         headers = {
-            "Authorization": f"Basic {auth_b64}",
             "Accept": "application/json",
             "Content-Type": "application/json",
         }
 
-        params = {"jql": jql, "maxResults": 10, "fields": "key,summary"}
+        params = {"jql": jql, "maxResults": 10, "fields": "key"}
 
         logger.info("Querying Jira for recent tickets...")
 
         try:
-            response = requests.get(url, headers=headers, params=params, timeout=30)
+            response = requests.get(url, headers=headers, params=params, timeout=30, auth=auth)
         except requests.exceptions.RequestException as e:
             raise ConnectionError(f"Failed to connect to Jira API: {str(e)}") from e
 
