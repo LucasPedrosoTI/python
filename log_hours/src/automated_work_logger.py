@@ -205,7 +205,7 @@ class AutomatedWorkLogger:
             try:
                 logger.info("Login required. Authenticating...")
                 # Fill in credentials
-                self.page.locator("input[label='Username']").fill(
+                self.page.locator("input[label='User']").fill(
                     os.getenv("SYSTEM_USERNAME")
                 )
                 self.page.locator("input[label='Password']").fill(
