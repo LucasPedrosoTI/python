@@ -4,6 +4,28 @@ This folder contains utility scripts for testing and debugging the Work Logger a
 
 ## Scripts
 
+### `test_jira_connection.sh`
+Tests the Jira API connection and validates all required credentials.
+
+**What it does:**
+- Validates all required Jira environment variables are set
+- Tests server connectivity
+- Tests API authentication with the service account
+- Tests project access permissions
+- Runs the same JQL query used by the application
+
+**Usage:**
+```bash
+# Local (from project root)
+./scripts/test_jira_connection.sh
+
+# Inside Docker container
+bash /app/scripts/test_jira_connection.sh
+
+# From outside the container
+docker exec work-logger bash /app/scripts/test_jira_connection.sh
+```
+
 ### `test_cron_env.sh`
 Tests the cron environment setup by simulating the minimal environment that cron provides.
 
@@ -44,6 +66,7 @@ docker exec work-logger bash /app/scripts/test_cron_job.sh
 - **When debugging cron issues** to isolate environment problems
 - **Before deploying** to ensure the scheduled job will work
 - **When troubleshooting** Playwright or dependency issues
+- **When validating Jira credentials** after updating API tokens or service accounts
 
 ## Troubleshooting
 
