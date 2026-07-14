@@ -86,12 +86,12 @@ echo "Testing API authentication..."
 echo ""
 
 API_URL="$JIRA_URL/rest/api/3/myself"
-AUTH_STRING=$(echo -n "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" | base64)
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -H "Authorization: Basic $AUTH_STRING" \
+    -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" \
     -H "Accept: application/json" \
-    --connect-timeout 10 \
+    --connect-timeout 30 \
+    -L \
     "$API_URL")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
@@ -111,6 +111,13 @@ elif [ "$HTTP_CODE" = "403" ]; then
     echo "❌ Access forbidden (HTTP 403)"
     echo "   The service account may not have the required permissions"
     exit 1
+elif [ "$HTTP_CODE" = "000" ]; then
+    echo "❌ Connection failed (HTTP 000)"
+    echo "   This usually means a network or SSL/TLS issue"
+    echo ""
+    echo "🔍 Running verbose diagnostics..."
+    curl -v --connect-timeout 10 -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" "$API_URL" 2>&1 | head -30
+    exit 1
 else
     echo "❌ API request failed with HTTP $HTTP_CODE"
     echo "   Response: $BODY"
@@ -125,9 +132,10 @@ echo ""
 
 PROJECT_URL="$JIRA_URL/rest/api/3/project/$JIRA_PROJECT"
 RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -H "Authorization: Basic $AUTH_STRING" \
+    -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" \
     -H "Accept: application/json" \
-    --connect-timeout 10 \
+    --connect-timeout 30 \
+    -L \
     "$PROJECT_URL")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
@@ -164,9 +172,10 @@ SEARCH_URL="$JIRA_URL/rest/api/3/search/jql"
 ENCODED_JQL=$(echo -n "$JQL" | python3 -c "import sys, urllib.parse; print(urllib.parse.quote(sys.stdin.read()))")
 
 RESPONSE=$(curl -s -w "\n%{http_code}" \
-    -H "Authorization: Basic $AUTH_STRING" \
+    -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" \
     -H "Accept: application/json" \
     --connect-timeout 30 \
+    -L \
     "$SEARCH_URL?jql=$ENCODED_JQL&maxResults=10&fields=key,summary")
 
 HTTP_CODE=$(echo "$RESPONSE" | tail -n 1)
