@@ -1,0 +1,11 @@
+# Copy to config.toml for local overrides (config.toml is gitignored).
+# This project does not require secrets; only machine-specific paths/behavior.
+
+[output]
+# Always emit digits only (no punctuation). Kept for documentation / future flags.
+digits_only = true
+
+[cli]
+# Absolute path to the Python interpreter for macOS Shortcuts Run Shell Script.
+# Leave unset to use whatever `python`/`python3` is on PATH when you invoke the CLI.
+# python_path = "/Users/you/dev/python/docbr_generator/.venv/bin/python"

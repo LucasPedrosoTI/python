@@ -6,6 +6,7 @@ This repo will be used to save all python related project.
 1. [Utilities](/utils)
 2. [Invoice Generator](/invoice_generator)
 3. [Log Hours](/log_hours)
+4. [DocBR Generator](/docbr_generator)
 
 ## CI/CD
 
@@ -51,3 +52,16 @@ A Python application that automatically logs hours to the service management sys
 - GitHub Actions for CI/CD
 
 For detailed installation instructions, configuration options, and usage examples, see the [README](/log_hours/README.md).
+
+### DocBR Generator
+
+A small CLI that generates algorithmically valid Brazilian CPF/CNPJ numbers (digits only) for local testing, with setup docs for macOS Shortcuts keyboard paste.
+
+**Features:**
+- Valid Mod-11 CPF (11 digits) and CNPJ (14 digits)
+- Digits-only stdout suitable for `pbcopy` / Shortcuts
+- Optional `--copy` to clipboard on macOS
+- TOML config example (local overrides gitignored)
+- pytest coverage for generators and CLI
+
+For setup, run, test, and Shortcuts hotkey instructions, see the [README](/docbr_generator/README.md).
