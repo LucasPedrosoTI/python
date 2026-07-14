@@ -116,7 +116,7 @@ elif [ "$HTTP_CODE" = "000" ]; then
     echo "   This usually means a network or SSL/TLS issue"
     echo ""
     echo "🔍 Running verbose diagnostics..."
-    curl -v --connect-timeout 10 -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" "$API_URL" 2>&1 | head -30
+    curl -v --connect-timeout 30 -u "$JIRA_SVC_ACCOUNT:$JIRA_API_TOKEN" "$API_URL" 2>&1 | head -30
     exit 1
 else
     echo "❌ API request failed with HTTP $HTTP_CODE"
