@@ -7,6 +7,7 @@ This repo will be used to save all python related project.
 2. [Invoice Generator](/invoice_generator)
 3. [Log Hours](/log_hours)
 4. [DocBR Generator](/docbr_generator)
+5. [SuperFrete Quote](/superfrete_quote)
 
 ## CI/CD
 
@@ -65,3 +66,15 @@ A small CLI that generates algorithmically valid Brazilian CPF/CNPJ numbers (dig
 - pytest coverage for generators and CLI
 
 For setup, run, test, and Shortcuts hotkey instructions, see the [README](/docbr_generator/README.md).
+
+### SuperFrete Quote
+
+CLI that quotes products via the SuperFrete calculator API for all Brazilian state capitals and exports a CSV (Managed / Light / Fixed Wireless).
+
+**Features:**
+- TOML config for token, origin CEP, services, insurance, and FX rate
+- Loggi (`31`) quotes with insurance capped at R$ 3.000
+- Output prices in BRL or USD (`output_currency`)
+- CSV table with carrier/service and transit days
+
+For setup and usage, see the [README](/superfrete_quote/README.md).

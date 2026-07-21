@@ -1,0 +1,180 @@
+# Copy to config.toml and set your sandbox/production token.
+# config.toml is gitignored.
+
+[api]
+base_url = "https://sandbox.superfrete.com/api/v0"
+token = "REPLACE_ME"
+user_agent = "SuperFrete Quote CLI/0.1.0 (you@example.com)"
+
+[quote]
+from_postal_code = "08538300"
+# Comma-separated SuperFrete service codes. One CSV row per service per destination.
+# 1=PAC, 2=SEDEX, 17=Mini Envios, 3=Jadlog, 31=Loggi
+services = "31"
+use_insurance_value = true
+max_insurance_value_brl = 3000.0
+# Used for Fixed Wireless insurance USD→BRL and for CSV BRL→USD when output_currency = "USD"
+usd_brl_rate = 5.50
+output_currency = "BRL"  # "BRL" | "USD"
+
+[[products]]
+key = "managed"
+label = "Managed  (41.84 lb / 18.98 kg)"
+length_cm = 73
+width_cm = 50
+height_cm = 26
+weight_kg = 18.98
+insurance_value_brl = 3000.0
+
+[[products]]
+key = "light"
+label = "Light  (35.41 lb / 16.06 kg)"
+length_cm = 73
+width_cm = 50
+height_cm = 22
+weight_kg = 16.06
+insurance_value_brl = 3000.0
+
+[[products]]
+key = "fixed_wireless"
+label = "Fixed Wireless  (6.83 lb / 3.10 kg)"
+length_cm = 30
+width_cm = 22
+height_cm = 18
+weight_kg = 3.10
+insurance_value_usd = 350.0
+
+[[destinations]]
+uf = "AC"
+name = "Rio Branco"
+postal_code = "69900970"
+
+[[destinations]]
+uf = "AL"
+name = "Maceió"
+postal_code = "57020000"
+
+[[destinations]]
+uf = "AP"
+name = "Macapá"
+postal_code = "68900070"
+
+[[destinations]]
+uf = "AM"
+name = "Manaus"
+postal_code = "69005040"
+
+[[destinations]]
+uf = "BA"
+name = "Barro Preto"
+postal_code = "45625000"
+
+[[destinations]]
+uf = "CE"
+name = "Fortaleza"
+postal_code = "60010000"
+
+[[destinations]]
+uf = "DF"
+name = "Brasília"
+postal_code = "70040902"
+
+[[destinations]]
+uf = "ES"
+name = "Vitória"
+postal_code = "29010020"
+
+[[destinations]]
+uf = "GO"
+name = "Goiânia"
+postal_code = "74003010"
+
+[[destinations]]
+uf = "MA"
+name = "São Luís"
+postal_code = "65010000"
+
+[[destinations]]
+uf = "MT"
+name = "Cuiabá"
+postal_code = "78005000"
+
+[[destinations]]
+uf = "MS"
+name = "Campo Grande"
+postal_code = "79002000"
+
+[[destinations]]
+uf = "MG"
+name = "Belo Horizonte"
+postal_code = "30130000"
+
+[[destinations]]
+uf = "PA"
+name = "Belém"
+postal_code = "66010000"
+
+[[destinations]]
+uf = "PB"
+name = "João Pessoa"
+postal_code = "58010000"
+
+[[destinations]]
+uf = "PR"
+name = "Curitiba"
+postal_code = "80010000"
+
+[[destinations]]
+uf = "PE"
+name = "Recife"
+postal_code = "50010000"
+
+[[destinations]]
+uf = "PI"
+name = "Teresina"
+postal_code = "64000020"
+
+[[destinations]]
+uf = "RJ"
+name = "Rio de Janeiro"
+postal_code = "20040020"
+
+[[destinations]]
+uf = "RN"
+name = "Natal"
+postal_code = "59010000"
+
+[[destinations]]
+uf = "RS"
+name = "Porto Alegre"
+postal_code = "90010000"
+
+[[destinations]]
+uf = "RO"
+name = "Porto Velho"
+postal_code = "76801000"
+
+[[destinations]]
+uf = "RR"
+name = "Boa Vista"
+postal_code = "69301000"
+
+[[destinations]]
+uf = "SC"
+name = "Florianópolis"
+postal_code = "88010000"
+
+[[destinations]]
+uf = "SP"
+name = "São Paulo"
+postal_code = "01001000"
+
+[[destinations]]
+uf = "SE"
+name = "Aracaju"
+postal_code = "49010000"
+
+[[destinations]]
+uf = "TO"
+name = "Palmas"
+postal_code = "77001008"
