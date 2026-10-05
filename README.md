@@ -8,6 +8,7 @@ This repo will be used to save all python related project.
 3. [Log Hours](/log_hours)
 4. [DocBR Generator](/docbr_generator)
 5. [SuperFrete Quote](/superfrete_quote)
+6. [Permutation and combination](/studies/permutacao-combinacao)
 
 ## CI/CD
 
@@ -78,3 +79,8 @@ CLI that quotes products via the SuperFrete calculator API for all Brazilian sta
 - CSV table with carrier/service and transit days
 
 For setup and usage, see the [README](/superfrete_quote/README.md).
+
+### Permutation and combination
+
+Small course exercise that calculates how many permutations or combinations are possible for a set of items. The code is in [studies/permutacao-combinacao](/studies/permutacao-combinacao).
+
